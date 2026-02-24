@@ -20,6 +20,13 @@ import {
   Settings2,
   ArrowLeft,
   Zap,
+  Globe2,
+  Cpu,
+  Wand2,
+  Film,
+  SlidersHorizontal,
+  Eye,
+  ChevronRight,
 } from "lucide-react";
 
 // ============================================================================
@@ -179,80 +186,307 @@ function computeRivers(heightMap, w, h, seaLevel, threshold = 12) {
 function LandingPage({ onLaunchSimulator }) {
   const features = [
     {
-      title: "Expanded Density Scale",
-      icon: <Layers className="w-5 h-5 text-indigo-400" />,
-      desc: "Cities now evolve from rural villages (Lv 1) to sprawling suburbs (Lv 3-4) and dense megacities (Lv 9).",
+      title: "Procedural Terrain",
+      icon: <Globe2 className="w-5 h-5 text-cyan-400" />,
+      accent: "cyan",
+      desc: "Domain Warping + Fractional Brownian Motion via Simplex Noise carves realistic continents, deep oceans, and jagged mountain ranges.",
     },
     {
       title: "Urban Gravity",
-      icon: <Building2 className="w-5 h-5 text-purple-400" />,
-      desc: "The 'Highlander' rule: New cities suppress the growth of immediate neighbors, forcing organic spacing.",
+      icon: <Building2 className="w-5 h-5 text-indigo-400" />,
+      accent: "indigo",
+      desc: "The 'Highlander' rule: new cities suppress the growth of immediate neighbors, forcing organic spacing and realistic sprawl.",
     },
     {
       title: "Agglomeration",
-      icon: <Layers className="w-5 h-5 text-green-400" />,
-      desc: "Rich get richer: Core cities grow exponentially faster when surrounded and fed by rural suburbs.",
+      icon: <Layers className="w-5 h-5 text-violet-400" />,
+      accent: "violet",
+      desc: "Rich get richer: core cities grow exponentially faster when surrounded and fed by rural farm tiles.",
     },
     {
       title: "Trade Nodes",
       icon: <MapIcon className="w-5 h-5 text-blue-400" />,
-      desc: "Megacities (Lv 7+) only form at strategic locations adjacent to rivers or oceans, mimicking historical trade routes.",
+      accent: "blue",
+      desc: "Megacities (Lv 7+) only emerge at strategic coastal or riverside locations — mimicking real historical trade routes.",
+    },
+    {
+      title: "AI World Dreamer",
+      icon: <Wand2 className="w-5 h-5 text-fuchsia-400" />,
+      accent: "fuchsia",
+      desc: "Powered by Google Gemini. The Oracle invents a world name, founding myth, and culture — then physically shapes the terrain to match.",
+    },
+    {
+      title: "Cinematic Transitions",
+      icon: <Film className="w-5 h-5 text-amber-400" />,
+      accent: "amber",
+      desc: "Battle flash ⚔️, growth glow ✨, and sprawl fade-in 🌱 — an rAF interpolation engine renders smooth animated transitions at 60fps.",
     },
   ];
 
+  const stats = [
+    { value: "160 × 100", label: "Grid Resolution" },
+    { value: "80", label: "Simulated Epochs" },
+    { value: "5", label: "Faction Colors" },
+    { value: "3", label: "View Modes" },
+  ];
+
+  const steps = [
+    {
+      num: "01",
+      icon: <SlidersHorizontal className="w-6 h-6" />,
+      title: "Generate",
+      desc: "Dial sea level and factions, then click Rebuild — or let the AI Oracle dream the world for you.",
+    },
+    {
+      num: "02",
+      icon: <Cpu className="w-6 h-6" />,
+      title: "Simulate",
+      desc: "Watch 80 epochs of civilisation history unfold: tribes settle, cities cluster, borders clash.",
+    },
+    {
+      num: "03",
+      icon: <Eye className="w-6 h-6" />,
+      title: "Explore",
+      desc: "Scrub the timeline, switch between Terrain / Heatmap / City views, and study the emergent empires.",
+    },
+  ];
+
+  const accentMap = {
+    cyan: "group-hover:border-cyan-500/60 group-hover:shadow-cyan-500/10",
+    indigo: "group-hover:border-indigo-500/60 group-hover:shadow-indigo-500/10",
+    violet: "group-hover:border-violet-500/60 group-hover:shadow-violet-500/10",
+    blue: "group-hover:border-blue-500/60 group-hover:shadow-blue-500/10",
+    fuchsia:
+      "group-hover:border-fuchsia-500/60 group-hover:shadow-fuchsia-500/10",
+    amber: "group-hover:border-amber-500/60 group-hover:shadow-amber-500/10",
+  };
+
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-indigo-500 selection:text-white flex flex-col">
-      <nav className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500 selection:text-white flex flex-col overflow-x-hidden">
+      {/* ── NAV ── */}
+      <nav className="sticky top-0 z-50 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse"></div>
-            CitySim<span className="text-indigo-400">.AI</span>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse" />
+              <div className="absolute inset-0 w-2.5 h-2.5 bg-indigo-500 rounded-full animate-ping opacity-40" />
+            </div>
+            <span className="font-extrabold text-xl tracking-tight text-white">
+              CitySim<span className="text-indigo-400">.AI</span>
+            </span>
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+              v2.5
+            </span>
           </div>
           <button
             onClick={onLaunchSimulator}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-md text-sm font-bold transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2"
+            className="cursor-pointer group flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 shadow-lg shadow-indigo-900/40 hover:shadow-indigo-500/30"
           >
-            <Play size={16} fill="currentColor" /> Launch Simulation
+            <Play size={14} fill="currentColor" />
+            Launch Simulation
           </button>
         </div>
       </nav>
 
-      <main className="flex-1 flex flex-col items-center justify-center text-center px-4 py-20 relative overflow-hidden">
-        <div className="max-w-4xl mx-auto relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-900/30 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-8">
-            v2.5 • Urban Clustering Engine Live
+      {/* ── HERO ── */}
+      <main className="relative flex-1 flex flex-col items-center justify-center text-center px-6 pt-28 pb-20 overflow-hidden">
+        {/* Animated orb background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px]" />
+          <div className="absolute top-60 -left-40 w-[500px] h-[500px] bg-violet-700/10 rounded-full blur-[100px]" />
+          <div className="absolute top-60 -right-40 w-[500px] h-[500px] bg-cyan-700/8 rounded-full blur-[100px]" />
+          {/* Dot grid overlay */}
+          <div
+            className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, #818cf8 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-10 backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
+            Now with Cinematic Animation Engine
           </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6">
-            Procedural History <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+
+          {/* Headline */}
+          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-white tracking-tighter leading-none mb-7">
+            Procedural History
+            <br />
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-400 via-cyan-300 to-violet-400">
               Written in Code
             </span>
           </h1>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            A physics-based civilization simulator. Watch as tribes settle
-            fertile lands, form distinct urban clusters, wage border wars, and
-            evolve into trade empires based on realistic geographical
-            constraints.
+
+          {/* Subheading */}
+          <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+            A physics-based civilization simulator powered by Cellular Automata
+            and Google Gemini. Watch tribes settle fertile lands, wage border
+            wars, and evolve into megacities — all with cinematic 60fps
+            transitions.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-3xl mx-auto">
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+            <button
+              onClick={onLaunchSimulator}
+              className="cursor-pointer group flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-xl text-base font-bold transition-all duration-200 shadow-xl shadow-indigo-900/50 hover:shadow-indigo-500/30 hover:-translate-y-0.5"
+            >
+              <Play size={18} fill="currentColor" />
+              Launch Simulation
+              <ChevronRight
+                size={16}
+                className="opacity-60 group-hover:translate-x-0.5 transition-transform"
+              />
+            </button>
+            <a
+              href="#features"
+              className="cursor-pointer flex items-center gap-2 text-slate-400 hover:text-white px-8 py-4 rounded-xl text-base font-medium border border-slate-800 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900/80 transition-all duration-200 backdrop-blur-sm"
+            >
+              Explore Features
+            </a>
+          </div>
+        </div>
+      </main>
+
+      {/* ── STATS BAR ── */}
+      <div className="border-y border-slate-800/60 bg-slate-900/40 backdrop-blur-sm py-6">
+        <div className="max-w-4xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+          {stats.map((s) => (
+            <div key={s.label}>
+              <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                {s.value}
+              </div>
+              <div className="text-xs text-slate-500 uppercase tracking-widest mt-1 font-medium">
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── FEATURES ── */}
+      <section id="features" className="py-24 px-6 relative">
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-indigo-950/5 to-transparent pointer-events-none" />
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="text-center mb-16">
+            <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">
+              Engine Features
+            </p>
+            <h2 className="text-4xl font-extrabold text-white tracking-tight">
+              Built like a real simulator
+            </h2>
+            <p className="text-slate-500 mt-3 max-w-xl mx-auto">
+              Every system is grounded in real urban geography and historical
+              patterns.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((f, i) => (
               <div
                 key={i}
-                className="bg-slate-800/50 border border-slate-700 p-5 rounded-xl hover:border-indigo-500/50 transition-colors"
+                className={`group relative bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:shadow-xl backdrop-blur-sm cursor-default transition-all duration-300 ${accentMap[f.accent]}`}
               >
-                <div className="flex items-center gap-3 mb-2 font-bold text-white">
-                  {f.icon} {f.title}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-slate-800/80">{f.icon}</div>
+                  <h3 className="font-bold text-white text-sm">{f.title}</h3>
                 </div>
-                <p className="text-sm text-slate-400">{f.desc}</p>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  {f.desc}
+                </p>
               </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* Background FX */}
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-900/50 to-slate-900 pointer-events-none"></div>
-      </main>
+      {/* ── HOW IT WORKS ── */}
+      <section className="py-24 px-6 border-t border-slate-800/40">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-3">
+              How It Works
+            </p>
+            <h2 className="text-4xl font-extrabold text-white tracking-tight">
+              Three steps to civilisation
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Connector line */}
+            <div className="hidden md:block absolute top-10 left-1/3 right-1/3 h-px bg-linear-to-r from-indigo-500/20 via-cyan-500/40 to-violet-500/20" />
+            {steps.map((step, i) => (
+              <div
+                key={i}
+                className="relative flex flex-col items-center text-center gap-4"
+              >
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-indigo-400 shadow-lg shadow-indigo-900/20 group-hover:border-indigo-500/40 transition-colors">
+                    {step.icon}
+                  </div>
+                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold flex items-center justify-center">
+                    {i + 1}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">
+                    {step.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA FOOTER BANNER ── */}
+      <section className="py-24 px-6">
+        <div className="max-w-4xl mx-auto relative">
+          {/* Glow blob */}
+          <div className="absolute inset-0 bg-indigo-600/10 rounded-3xl blur-3xl" />
+          <div className="relative bg-linear-to-br from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/20 rounded-3xl p-12 text-center overflow-hidden">
+            {/* Inner grid */}
+            <div
+              className="absolute inset-0 opacity-[0.04] rounded-3xl"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle, #818cf8 1px, transparent 1px)",
+                backgroundSize: "24px 24px",
+              }}
+            />
+            <div className="relative z-10">
+              <h2 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tighter mb-4">
+                Ready to rewrite history?
+              </h2>
+              <p className="text-slate-400 text-lg mb-9 max-w-xl mx-auto">
+                No install. No sign-up. Just open the simulator and watch
+                civilisations emerge in seconds.
+              </p>
+              <button
+                onClick={onLaunchSimulator}
+                className="cursor-pointer inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-xl text-base font-bold transition-all duration-200 shadow-2xl shadow-indigo-900/60 hover:shadow-indigo-500/30 hover:-translate-y-0.5"
+              >
+                <Play size={18} fill="currentColor" />
+                Launch Simulation — It's Free
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-slate-800/40 py-8 px-6 text-center text-xs text-slate-600">
+        <span>
+          CitySim.AI v2.5 · Built with React, HTML5 Canvas, Cellular Automata
+          &amp; Google Gemini
+        </span>
+      </footer>
     </div>
   );
 }
@@ -263,6 +497,8 @@ function LandingPage({ onLaunchSimulator }) {
 function SimulatorApp({ onBackToDocs }) {
   const canvasRef = useRef(null);
   const miniRef = useRef(null);
+  const animRef = useRef(null); // rAF handle
+  const diffRef = useRef(null); // { grown, conquered, sprawled, razed } Sets
 
   // -- Constants & State --
   const mapW = 160;
@@ -303,6 +539,12 @@ function SimulatorApp({ onBackToDocs }) {
 
       setIsGenerating(true);
       setPlaying(false);
+      // Cancel any in-flight rAF animation so stale diffs don't bleed into the new world
+      if (animRef.current) {
+        cancelAnimationFrame(animRef.current);
+        animRef.current = null;
+        diffRef.current = null;
+      }
 
       // Run async to allow UI render
       setTimeout(() => {
@@ -662,7 +904,31 @@ function SimulatorApp({ onBackToDocs }) {
     }
   };
 
+  // --- ANIMATION HELPERS ---
+  const computeDiff = useCallback((fromSnap, toSnap) => {
+    const grown = new Set(); // same faction, density increased
+    const conquered = new Set(); // faction changed
+    const sprawled = new Set(); // 0  → city (new settlement)
+    const razed = new Set(); // city → 0  (erased)
+    if (!fromSnap || !toSnap) return { grown, conquered, sprawled, razed };
+    for (let i = 0; i < fromSnap.length; i++) {
+      const fv = fromSnap[i],
+        tv = toSnap[i];
+      if (fv === tv) continue;
+      const ff = Math.floor(fv / 10),
+        tf = Math.floor(tv / 10);
+      const fd = fv % 10,
+        td = tv % 10;
+      if (fv === 0 && tv > 0) sprawled.add(i);
+      else if (tv === 0 && fv > 0) razed.add(i);
+      else if (ff !== tf && tf > 0) conquered.add(i);
+      else if (ff === tf && td > fd) grown.add(i);
+    }
+    return { grown, conquered, sprawled, razed };
+  }, []);
+
   // --- RENDERERS ---
+
   const hexToRgba = (hex, a) => {
     const r = parseInt(hex.slice(1, 3), 16),
       g = parseInt(hex.slice(3, 5), 16),
@@ -670,111 +936,307 @@ function SimulatorApp({ onBackToDocs }) {
     return `rgba(${r},${g},${b},${a})`;
   };
 
-  const drawMain = useCallback(() => {
-    const cvs = canvasRef.current;
-    if (!cvs || !heightMap) return;
-    const ctx = cvs.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const width = mapW * tileSize;
-    const height = mapH * tileSize;
-    cvs.width = width * dpr;
-    cvs.height = height * dpr;
-    ctx.scale(dpr, dpr);
+  const drawMain = useCallback(
+    (fromEpochArg, toEpochArg, tArg, diffArg) => {
+      const cvs = canvasRef.current;
+      if (!cvs || !heightMap) return;
+      const ctx = cvs.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const width = mapW * tileSize;
+      const height = mapH * tileSize;
+      cvs.width = width * dpr;
+      cvs.height = height * dpr;
+      ctx.scale(dpr, dpr);
 
-    ctx.clearRect(0, 0, width, height);
+      // Resolve animation params — fall back to static render when called without args
+      const fromEpoch =
+        fromEpochArg !== undefined ? fromEpochArg : currentEpoch;
+      const toEpoch = toEpochArg !== undefined ? toEpochArg : currentEpoch;
+      const t = tArg !== undefined ? tArg : 1;
+      const diff = diffArg !== undefined ? diffArg : null;
+      const isAnimating = diff !== null && t < 1;
 
-    // 1. Draw Terrain
-    for (let y = 0; y < mapH; y++) {
-      for (let x = 0; x < mapW; x++) {
-        const i = y * mapW + x;
-        const elev = heightMap[i];
+      ctx.clearRect(0, 0, width, height);
 
-        if (viewMode === "heatmap") {
-          if (elev <= seaLevel) ctx.fillStyle = "#0f172a";
-          else {
-            const s = suitabilityMap ? suitabilityMap[i] : 0;
-            const r = Math.floor(s * 255);
-            ctx.fillStyle = `rgb(${r}, ${Math.floor(r * 0.8)}, 50)`;
+      // 1. Draw Terrain
+      for (let y = 0; y < mapH; y++) {
+        for (let x = 0; x < mapW; x++) {
+          const i = y * mapW + x;
+          const elev = heightMap[i];
+          if (viewMode === "heatmap") {
+            if (elev <= seaLevel) ctx.fillStyle = "#0f172a";
+            else {
+              const s = suitabilityMap ? suitabilityMap[i] : 0;
+              const r = Math.floor(s * 255);
+              ctx.fillStyle = `rgb(${r}, ${Math.floor(r * 0.8)}, 50)`;
+            }
+          } else {
+            if (elev <= seaLevel) ctx.fillStyle = "#1e3a8a";
+            else if (elev <= seaLevel + 0.02) ctx.fillStyle = "#3b82f6";
+            else if (elev <= seaLevel + 0.05) ctx.fillStyle = "#fde047";
+            else if (elev > 0.85) ctx.fillStyle = "#f1f5f9";
+            else if (elev > 0.7) ctx.fillStyle = "#64748b";
+            else ctx.fillStyle = "#166534";
           }
-        } else {
-          if (elev <= seaLevel) ctx.fillStyle = "#1e3a8a";
-          else if (elev <= seaLevel + 0.02) ctx.fillStyle = "#3b82f6";
-          else if (elev <= seaLevel + 0.05) ctx.fillStyle = "#fde047";
-          else if (elev > 0.85) ctx.fillStyle = "#f1f5f9";
-          else if (elev > 0.7) ctx.fillStyle = "#64748b";
-          else ctx.fillStyle = "#166534";
-        }
-        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-      }
-    }
-
-    // 2. Draw Rivers
-    if (rivers && viewMode !== "heatmap") {
-      ctx.fillStyle = "#60a5fa";
-      for (let i = 0; i < rivers.length; i++) {
-        if (rivers[i]) {
-          const x = i % mapW;
-          const y = Math.floor(i / mapW);
           ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
         }
       }
-    }
 
-    // 3. Draw Cities (The New Logic Visualizer)
-    // ISSUE #3 FIX: Only render CA Blocks if specifically in "City" viewMode. Hides in Terrain view.
-    if (viewMode === "city" && citySnapshots[currentEpoch]) {
-      const city = citySnapshots[currentEpoch];
+      // 2. Draw Rivers
+      if (rivers && viewMode !== "heatmap") {
+        ctx.fillStyle = "#60a5fa";
+        for (let i = 0; i < rivers.length; i++) {
+          if (rivers[i]) {
+            const x = i % mapW;
+            const y = Math.floor(i / mapW);
+            ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+          }
+        }
+      }
 
-      // Darken terrain for pop to stand out
-      ctx.fillStyle = "rgba(15, 23, 42, 0.5)";
-      ctx.fillRect(0, 0, width, height);
+      // 3. Draw Cities — with optional cinematic animation effects
+      const toSnap = citySnapshots[toEpoch];
+      const fromSnap = citySnapshots[fromEpoch];
+      if (viewMode === "city" && toSnap) {
+        // Darken terrain so city layer pops
+        ctx.fillStyle = "rgba(15, 23, 42, 0.5)";
+        ctx.fillRect(0, 0, width, height);
 
-      for (let i = 0; i < city.length; i++) {
-        const val = city[i];
-        if (val > 0) {
-          const x = i % mapW;
-          const y = Math.floor(i / mapW);
+        // Helper: returns alpha for a given density level
+        const densityAlpha = (d) =>
+          d >= 7 ? 1.0 : d >= 5 ? 0.95 : d >= 3 ? 0.6 : 0.25;
 
+        // Helper: draws a standard (non-animated) tile
+        const drawTile = (i, snap) => {
+          const val = snap[i];
+          if (val === 0) return;
+          const x = i % mapW,
+            y = Math.floor(i / mapW);
           const tId = Math.floor(val / 10);
           const density = val % 10;
           const color = factionColors[(tId - 1) % factionColors.length];
-
-          // Density Visualization Scale
-          let alpha = 0.25; // Rural (1-2)
-          if (density >= 3) alpha = 0.6; // Suburb (3-4)
-          if (density >= 5) alpha = 0.95; // City (5-6)
-          if (density >= 7) alpha = 1.0; // Megacity (7-9)
-
-          ctx.fillStyle = hexToRgba(color, alpha);
+          ctx.fillStyle = hexToRgba(color, densityAlpha(density));
           ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-
-          // Render Core for Megacities
           if (density >= 7) {
             ctx.fillStyle = "#ffffff";
             const center = tileSize / 2;
-            const size = density === 9 ? 4 : 2; // Size 4 for absolute max, 2 for normal megacity
+            const sz = density === 9 ? 4 : 2;
             ctx.fillRect(
-              x * tileSize + center - size / 2,
-              y * tileSize + center - size / 2,
-              size,
-              size,
+              x * tileSize + center - sz / 2,
+              y * tileSize + center - sz / 2,
+              sz,
+              sz,
             );
           }
+        };
+
+        if (!isAnimating) {
+          // --- STATIC RENDER (no animation) ---
+          for (let i = 0; i < toSnap.length; i++) drawTile(i, toSnap);
+        } else {
+          // --- ANIMATED RENDER ---
+
+          // Pass 1: render all unchanged tiles from toSnap at full opacity
+          for (let i = 0; i < toSnap.length; i++) {
+            if (
+              diff.conquered.has(i) ||
+              diff.grown.has(i) ||
+              diff.sprawled.has(i) ||
+              diff.razed.has(i)
+            )
+              continue;
+            drawTile(i, toSnap);
+          }
+
+          // Pass 2: effect tiles (each wrapped in save/restore)
+
+          // 🌱 Sprawl fade-in: 0 → faction (full t range)
+          diff.sprawled.forEach((i) => {
+            const tv = toSnap[i];
+            if (!tv) return;
+            const x = i % mapW,
+              y = Math.floor(i / mapW);
+            const tId = Math.floor(tv / 10);
+            const density = tv % 10;
+            const color = factionColors[(tId - 1) % factionColors.length];
+            ctx.save();
+            ctx.globalAlpha = densityAlpha(density) * t;
+            ctx.fillStyle = color;
+            ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            ctx.restore();
+          });
+
+          // 💨 Raze fade-out: faction → 0 (full t range)
+          diff.razed.forEach((i) => {
+            const fv = fromSnap[i];
+            if (!fv) return;
+            const x = i % mapW,
+              y = Math.floor(i / mapW);
+            const tId = Math.floor(fv / 10);
+            const density = fv % 10;
+            const color = factionColors[(tId - 1) % factionColors.length];
+            ctx.save();
+            ctx.globalAlpha = densityAlpha(density) * (1 - t);
+            ctx.fillStyle = color;
+            ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            ctx.restore();
+          });
+
+          // ⚔️ Battle flash: faction changed (t=0→0.35 flash, then crossfade)
+          diff.conquered.forEach((i) => {
+            const fv = fromSnap[i],
+              tv = toSnap[i];
+            const x = i % mapW,
+              y = Math.floor(i / mapW);
+            ctx.save();
+            if (t < 0.35) {
+              // Flash phase: strobe over old faction tile
+              const oldTId = Math.floor(fv / 10);
+              const oldDensity = fv % 10;
+              const oldColor =
+                factionColors[(oldTId - 1) % factionColors.length];
+              ctx.globalAlpha = 1;
+              ctx.fillStyle = hexToRgba(oldColor, densityAlpha(oldDensity));
+              ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+              // Red war-glow overlay
+              const flashT = Math.sin((t / 0.35) * Math.PI * 6);
+              const flashAlpha = (1 - t / 0.35) * Math.abs(flashT);
+              ctx.shadowBlur = 12;
+              ctx.shadowColor = "#ef4444";
+              ctx.fillStyle = `rgba(239,68,68,${flashAlpha})`;
+              ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            } else {
+              // Crossfade to new faction color
+              const crossT = (t - 0.35) / 0.65;
+              const newTId = Math.floor(tv / 10);
+              const newDensity = tv % 10;
+              const newColor =
+                factionColors[(newTId - 1) % factionColors.length];
+              ctx.globalAlpha = densityAlpha(newDensity) * crossT;
+              ctx.fillStyle = newColor;
+              ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+              if (newDensity >= 7 && crossT > 0.7) {
+                ctx.fillStyle = "#ffffff";
+                ctx.globalAlpha = crossT;
+                const center = tileSize / 2;
+                const sz = newDensity === 9 ? 4 : 2;
+                ctx.fillRect(
+                  x * tileSize + center - sz / 2,
+                  y * tileSize + center - sz / 2,
+                  sz,
+                  sz,
+                );
+              }
+            }
+            ctx.restore();
+          });
+
+          // ✨ Growth glow: density increased (bell curve glow t=0.3→0.8)
+          diff.grown.forEach((i) => {
+            const tv = toSnap[i];
+            if (!tv) return;
+            const x = i % mapW,
+              y = Math.floor(i / mapW);
+            const tId = Math.floor(tv / 10);
+            const density = tv % 10;
+            const color = factionColors[(tId - 1) % factionColors.length];
+            ctx.save();
+            // Base tile at full opacity
+            ctx.globalAlpha = densityAlpha(density);
+            ctx.fillStyle = hexToRgba(color, densityAlpha(density));
+            ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            // Glow bell curve
+            if (t >= 0.3 && t <= 0.8) {
+              const glowPhase = (t - 0.3) / 0.5; // 0→1
+              const glowT = Math.sin(glowPhase * Math.PI); // bell 0→1→0
+              ctx.shadowBlur = 20 * glowT;
+              ctx.shadowColor = color;
+              ctx.globalAlpha = 0.9 + 0.1 * glowT;
+              ctx.fillStyle = color;
+              ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+              // White core pulse at peak glow for megacities
+              if (density >= 7 && glowT > 0.7) {
+                ctx.fillStyle = "#ffffff";
+                ctx.globalAlpha = glowT;
+                const center = tileSize / 2;
+                const sz = density === 9 ? 4 : 2;
+                ctx.fillRect(
+                  x * tileSize + center - sz / 2,
+                  y * tileSize + center - sz / 2,
+                  sz,
+                  sz,
+                );
+              }
+            } else if (density >= 7) {
+              // Still render white core outside glow range
+              ctx.fillStyle = "#ffffff";
+              ctx.globalAlpha = 1;
+              const center = tileSize / 2;
+              const sz = density === 9 ? 4 : 2;
+              ctx.fillRect(
+                x * tileSize + center - sz / 2,
+                y * tileSize + center - sz / 2,
+                sz,
+                sz,
+              );
+            }
+            ctx.restore();
+          });
         }
       }
-    }
-  }, [
-    heightMap,
-    rivers,
-    citySnapshots,
-    currentEpoch,
-    viewMode,
-    seaLevel,
-    suitabilityMap,
-    factionColors,
-  ]);
+    },
+    [
+      heightMap,
+      rivers,
+      citySnapshots,
+      currentEpoch,
+      viewMode,
+      seaLevel,
+      suitabilityMap,
+      factionColors,
+    ],
+  );
+
+  // startTransition: rAF-based animated epoch transition engine
+  // Declared AFTER drawMain so drawMain is initialized first (avoids TDZ error)
+  const startTransition = useCallback(
+    (fromEpoch, toEpoch, duration = 700) => {
+      // Cancel any in-flight animation
+      if (animRef.current) {
+        cancelAnimationFrame(animRef.current);
+        animRef.current = null;
+      }
+      // Compute diff once at transition start — O(16,000), ~1ms
+      const fromSnap = citySnapshots[fromEpoch];
+      const toSnap = citySnapshots[toEpoch];
+      if (!fromSnap || !toSnap) {
+        setCurrentEpoch(toEpoch);
+        return;
+      }
+      diffRef.current = computeDiff(fromSnap, toSnap);
+
+      const startTime = performance.now();
+      const loop = (now) => {
+        const raw = Math.min((now - startTime) / duration, 1);
+        // Ease-in-out cubic
+        const easedT =
+          raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+        drawMain(fromEpoch, toEpoch, easedT, diffRef.current);
+        if (raw < 1) {
+          animRef.current = requestAnimationFrame(loop);
+        } else {
+          animRef.current = null;
+          diffRef.current = null;
+          setCurrentEpoch(toEpoch);
+        }
+      };
+      animRef.current = requestAnimationFrame(loop);
+    },
+    [citySnapshots, computeDiff, drawMain],
+  );
 
   // Handle Minimap
+
   const drawMini = useCallback(() => {
     const cvs = miniRef.current;
     if (!cvs || !heightMap) return;
@@ -821,21 +1283,24 @@ function SimulatorApp({ onBackToDocs }) {
   useEffect(() => {
     drawMain();
     drawMini();
+    return () => {
+      // Cancel rAF on unmount to prevent leaks
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+    };
   }, [drawMain, drawMini]);
 
+  // Auto-play: advance epoch every 750ms via animated transition
   useEffect(() => {
-    let interval;
-    if (playing && currentEpoch < maxEpochs) {
-      interval = setInterval(
-        () =>
-          setCurrentEpoch((prev) =>
-            prev >= maxEpochs ? (setPlaying(false), maxEpochs) : prev + 1,
-          ),
-        100,
-      );
-    } else if (currentEpoch >= maxEpochs) setPlaying(false);
-    return () => clearInterval(interval);
-  }, [playing, currentEpoch]);
+    if (!playing) return;
+    if (currentEpoch >= maxEpochs) {
+      setPlaying(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      startTransition(currentEpoch, currentEpoch + 1, 700);
+    }, 50); // small delay so transitions chain without overlap
+    return () => clearTimeout(timer);
+  }, [playing, currentEpoch, startTransition]);
 
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden">
@@ -1082,7 +1547,11 @@ function SimulatorApp({ onBackToDocs }) {
                 <button
                   onClick={() => {
                     setPlaying(false);
-                    setCurrentEpoch(0);
+                    if (animRef.current) {
+                      cancelAnimationFrame(animRef.current);
+                      animRef.current = null;
+                    }
+                    startTransition(currentEpoch, 0, 400);
                   }}
                   className="p-2 rounded-full hover:bg-slate-800 text-slate-400 transition-colors"
                 >
@@ -1101,7 +1570,11 @@ function SimulatorApp({ onBackToDocs }) {
                 <button
                   onClick={() => {
                     setPlaying(false);
-                    setCurrentEpoch(maxEpochs);
+                    if (animRef.current) {
+                      cancelAnimationFrame(animRef.current);
+                      animRef.current = null;
+                    }
+                    startTransition(currentEpoch, maxEpochs, 400);
                   }}
                   className="p-2 rounded-full hover:bg-slate-800 text-slate-400 transition-colors"
                 >
@@ -1128,7 +1601,8 @@ function SimulatorApp({ onBackToDocs }) {
                   value={currentEpoch}
                   onChange={(e) => {
                     setPlaying(false);
-                    setCurrentEpoch(Number(e.target.value));
+                    const target = Number(e.target.value);
+                    startTransition(currentEpoch, target, 400);
                   }}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
