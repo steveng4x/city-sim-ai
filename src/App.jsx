@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { motion } from "framer-motion";
 import {
   Play,
   Pause,
@@ -184,6 +185,41 @@ function computeRivers(heightMap, w, h, seaLevel, threshold = 12) {
 // --- COMPONENT: LANDING PAGE ---
 // ============================================================================
 function LandingPage({ onLaunchSimulator }) {
+  // --- Framer Motion Variants ---
+  const fadeIn = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5 } },
+  };
+
+  const slideUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const staggerItem = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
+  };
+
   const features = [
     {
       title: "Procedural Terrain",
@@ -264,7 +300,12 @@ function LandingPage({ onLaunchSimulator }) {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500 selection:text-white flex flex-col overflow-x-hidden">
       {/* ── NAV ── */}
-      <nav className="sticky top-0 z-50 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-xl">
+      <motion.nav
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="sticky top-0 z-50 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-xl"
+      >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -280,22 +321,24 @@ function LandingPage({ onLaunchSimulator }) {
           </div>
           <button
             onClick={onLaunchSimulator}
-            className="cursor-pointer group flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 shadow-lg shadow-indigo-900/40 hover:shadow-indigo-500/30"
+            className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
           >
-            <Play size={14} fill="currentColor" />
-            Launch Simulation
+            <Play size={14} fill="currentColor" /> Launch Simulation
           </button>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* ── HERO ── */}
-      <main className="relative flex-1 flex flex-col items-center justify-center text-center px-6 pt-28 pb-20 overflow-hidden">
-        {/* Animated orb background */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px]" />
-          <div className="absolute top-60 -left-40 w-[500px] h-[500px] bg-violet-700/10 rounded-full blur-[100px]" />
-          <div className="absolute top-60 -right-40 w-[500px] h-[500px] bg-cyan-700/8 rounded-full blur-[100px]" />
-          {/* Dot grid overlay */}
+      <main className="flex-1 flex flex-col items-center justify-center text-center px-4 py-24 sm:py-32 relative overflow-hidden">
+        {/* Background Gradients & Effects */}
+        <div className="absolute inset-0 bg-[#020617]">
+          {/* subtle radial center glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(67,56,202,0.15),transparent_60%)] pointer-events-none" />
+          {/* subtle moving elements if any */}
+        </div>
+
+        {/* Animated Grid overlay */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none mask-[linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)]">
           <div
             className="absolute inset-0 opacity-[0.03]"
             style={{
@@ -306,32 +349,49 @@ function LandingPage({ onLaunchSimulator }) {
           />
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto">
+        <motion.div
+          className="relative z-10 max-w-5xl mx-auto"
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+        >
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-10 backdrop-blur-sm">
+          <motion.div
+            variants={staggerItem}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-10 backdrop-blur-sm"
+          >
             <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
             Now with Cinematic Animation Engine
-          </div>
+          </motion.div>
 
           {/* Headline */}
-          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-white tracking-tighter leading-none mb-7">
+          <motion.h1
+            variants={staggerItem}
+            className="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-white tracking-tighter leading-none mb-7"
+          >
             Procedural History
             <br />
             <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-400 via-cyan-300 to-violet-400">
               Written in Code
             </span>
-          </h1>
+          </motion.h1>
 
           {/* Subheading */}
-          <p className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+          <motion.p
+            variants={staggerItem}
+            className="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed"
+          >
             A physics-based civilization simulator powered by Cellular Automata
             and Google Gemini. Watch tribes settle fertile lands, wage border
             wars, and evolve into megacities — all with cinematic 60fps
             transitions.
-          </p>
+          </motion.p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+          <motion.div
+            variants={staggerItem}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
+          >
             <button
               onClick={onLaunchSimulator}
               className="cursor-pointer group flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-xl text-base font-bold transition-all duration-200 shadow-xl shadow-indigo-900/50 hover:shadow-indigo-500/30 hover:-translate-y-0.5"
@@ -349,31 +409,43 @@ function LandingPage({ onLaunchSimulator }) {
             >
               Explore Features
             </a>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </main>
 
       {/* ── STATS BAR ── */}
-      <div className="border-y border-slate-800/60 bg-slate-900/40 backdrop-blur-sm py-6">
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={staggerContainer}
+        className="border-y border-slate-800/60 bg-slate-900/40 backdrop-blur-sm py-6"
+      >
         <div className="max-w-4xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           {stats.map((s) => (
-            <div key={s.label}>
+            <motion.div key={s.label} variants={staggerItem}>
               <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                 {s.value}
               </div>
               <div className="text-xs text-slate-500 uppercase tracking-widest mt-1 font-medium">
                 {s.label}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* ── FEATURES ── */}
       <section id="features" className="py-24 px-6 relative">
         <div className="absolute inset-0 bg-linear-to-b from-transparent via-indigo-950/5 to-transparent pointer-events-none" />
         <div className="max-w-6xl mx-auto relative z-10">
-          <div className="text-center mb-16">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={slideUp}
+            className="text-center mb-16"
+          >
             <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">
               Engine Features
             </p>
@@ -384,12 +456,21 @@ function LandingPage({ onLaunchSimulator }) {
               Every system is grounded in real urban geography and historical
               patterns.
             </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          </motion.div>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+          >
             {features.map((f, i) => (
-              <div
+              <motion.div
                 key={i}
-                className={`group relative bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:shadow-xl backdrop-blur-sm cursor-default transition-all duration-300 ${accentMap[f.accent]}`}
+                variants={staggerItem}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className={`group relative bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:shadow-xl backdrop-blur-sm cursor-default transition-colors duration-300 ${accentMap[f.accent]}`}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className="p-2 rounded-lg bg-slate-800/80">{f.icon}</div>
@@ -398,29 +479,42 @@ function LandingPage({ onLaunchSimulator }) {
                 <p className="text-sm text-slate-500 leading-relaxed">
                   {f.desc}
                 </p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* ── HOW IT WORKS ── */}
       <section className="py-24 px-6 border-t border-slate-800/40">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={slideUp}
+            className="text-center mb-16"
+          >
             <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-3">
               How It Works
             </p>
             <h2 className="text-4xl font-extrabold text-white tracking-tight">
               Three steps to civilisation
             </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          </motion.div>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 relative"
+          >
             {/* Connector line */}
             <div className="hidden md:block absolute top-10 left-1/3 right-1/3 h-px bg-linear-to-r from-indigo-500/20 via-cyan-500/40 to-violet-500/20" />
             {steps.map((step, i) => (
-              <div
+              <motion.div
                 key={i}
+                variants={staggerItem}
                 className="relative flex flex-col items-center text-center gap-4"
               >
                 <div className="relative">
@@ -439,14 +533,20 @@ function LandingPage({ onLaunchSimulator }) {
                     {step.desc}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* ── CTA FOOTER BANNER ── */}
-      <section className="py-24 px-6">
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={slideUp}
+        className="py-24 px-6"
+      >
         <div className="max-w-4xl mx-auto relative">
           {/* Glow blob */}
           <div className="absolute inset-0 bg-indigo-600/10 rounded-3xl blur-3xl" />
@@ -478,7 +578,7 @@ function LandingPage({ onLaunchSimulator }) {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── FOOTER ── */}
       <footer className="border-t border-slate-800/40 py-8 px-6 text-center text-xs text-slate-600">
