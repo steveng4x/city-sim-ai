@@ -14,6 +14,12 @@ export function SimulatorControls({
   lore,
   executeGeneration,
   dreamWorldWithAI,
+  showRivers,
+  setShowRivers,
+  showResources,
+  setShowResources,
+  viewMode,
+  setViewMode,
 }) {
   return (
     <aside className="w-80 glass-panel p-6 flex flex-col gap-6 overflow-y-auto z-10 border-r border-border-default">
@@ -115,6 +121,39 @@ export function SimulatorControls({
           )}
         </div>
 
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => setViewMode("city")}
+            className={`w-full py-1.5 text-xs font-medium rounded transition-colors ${
+              viewMode === "city"
+                ? "bg-slate-700 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+            }`}
+          >
+            City Density
+          </button>
+          <button
+            onClick={() => setViewMode("province")}
+            className={`w-full py-1.5 text-xs font-medium rounded transition-colors ${
+              viewMode === "province"
+                ? "bg-indigo-900/40 text-indigo-200 shadow-sm ring-1 ring-inset ring-indigo-700/50"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+            }`}
+          >
+            Provinces
+          </button>
+          <button
+            onClick={() => setViewMode("heatmap")}
+            className={`w-full py-1.5 text-xs font-medium rounded transition-colors ${
+              viewMode === "heatmap"
+                ? "bg-amber-900/40 text-amber-200 shadow-sm ring-1 ring-inset ring-amber-700/50"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+            }`}
+          >
+            Suitability Heatmap
+          </button>
+        </div>
+
         <div className="space-y-3">
           <div className="flex justify-between text-xs text-text-secondary">
             <span>Sea Level</span>{" "}
@@ -144,6 +183,34 @@ export function SimulatorControls({
             onChange={(e) => setDesiredFactions(Number(e.target.value))}
             className="w-full h-1.5 bg-neutral-bg4 rounded-lg appearance-none cursor-pointer accent-brand"
           />
+        </div>
+
+        <div className="flex items-center justify-between mt-4">
+          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold">
+            Rivers
+          </span>
+          <button
+            onClick={() => setShowRivers(!showRivers)}
+            className={`w-8 h-4 rounded-full transition-colors relative ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
+          >
+            <div
+              className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showRivers ? "translate-x-4" : "translate-x-1"}`}
+            />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold">
+            Resources
+          </span>
+          <button
+            onClick={() => setShowResources(!showResources)}
+            className={`w-8 h-4 rounded-full transition-colors relative ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
+          >
+            <div
+              className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showResources ? "translate-x-4" : "translate-x-1"}`}
+            />
+          </button>
         </div>
 
         <div className="flex gap-2">

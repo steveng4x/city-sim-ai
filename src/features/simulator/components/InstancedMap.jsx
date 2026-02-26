@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useMemo } from "react";
 import * as THREE from "three";
-import { mapW, mapH, factionColors } from "../lib/constants";
+import { mapW, mapH, factionColors } from "@/features/simulator";
 
 const tempObject = new THREE.Object3D();
 const tempColor = new THREE.Color();
@@ -12,9 +12,14 @@ export function InstancedMap({
   resourceMap,
   citySnapshots,
   infrastructureSnapshots,
+  provinceSnapshots,
+  provinceRegistry,
   currentEpoch,
   viewMode,
   seaLevel,
+  finishGeneration,
+  showRivers,
+  showResources,
 }) {
   const meshRef = useRef();
 
@@ -98,12 +103,12 @@ export function InstancedMap({
           else tempColor.setHex(0x166534);
 
           // Rivers overlay
-          if (rivers && rivers[i]) {
+          if (showRivers && rivers && rivers[i]) {
             tempColor.setHex(0x60a5fa);
           }
 
           // Resource overlay
-          if (resourceMap) {
+          if (showResources && resourceMap) {
             if (resourceMap[i] === 1) tempColor.setHex(0x064e3b); // Forest
             if (resourceMap[i] === 2) tempColor.setHex(0xeab308); // Gold
           }
@@ -124,12 +129,72 @@ export function InstancedMap({
               const density = city[i] % 10;
               const colorHex = factionColors[(tId - 1) % factionColors.length];
 
-              // We mix the faction color with white if it's high density
+              // Dynamically mix faction color based on density (1-9)
               const baseC = new THREE.Color(colorHex);
-              if (density >= 7) {
-                baseC.lerp(new THREE.Color(0xffffff), 0.4);
+              if (density < 5) {
+                // Blend with black for low densities
+                const factor = (5 - density) * 0.15;
+                baseC.lerp(new THREE.Color(0x000000), factor);
+              } else if (density > 5) {
+                // Blend with white for high densities
+                const factor = (density - 5) * 0.15;
+                baseC.lerp(new THREE.Color(0xffffff), factor);
               }
               tempColor.copy(baseC);
+            }
+          } else if (viewMode === "province") {
+            const prov = provinceSnapshots
+              ? provinceSnapshots[currentEpoch]
+              : null;
+            if (prov && prov[i] > 0) {
+              const pId = prov[i];
+              const meta = provinceRegistry ? provinceRegistry[pId] : null;
+              if (meta) {
+                const fId = meta.factionId;
+                const colorHex =
+                  factionColors[(fId - 1) % factionColors.length];
+                const baseC = new THREE.Color(colorHex);
+
+                // Apply deterministic lightness jitter based on provinceId
+                // We don't hash string, instead we just use some prime number math to scatter the lightness offset
+                const jitter = (((pId * 104729) % 100) / 100) * 0.2 - 0.1; // random offset between -0.1 and 0.1
+
+                if (jitter > 0) {
+                  baseC.lerp(new THREE.Color(0xffffff), jitter);
+                } else if (jitter < 0) {
+                  baseC.lerp(new THREE.Color(0x000000), Math.abs(jitter));
+                }
+
+                // Look for borders without writing shaders – simple check across neighbors to see if it's the edge of a province
+                let isBorder = false;
+                const neighbors = [
+                  { dx: 0, dy: -1 },
+                  { dx: 0, dy: 1 },
+                  { dx: -1, dy: 0 },
+                  { dx: 1, dy: 0 },
+                ];
+
+                for (let n of neighbors) {
+                  const nx = x + n.dx;
+                  const ny = y + n.dy;
+                  if (nx >= 0 && nx < mapW && ny >= 0 && ny < mapH) {
+                    const nIdx = ny * mapW + nx;
+                    if (prov[nIdx] !== pId && prov[nIdx] > 0) {
+                      // Check if neighbor belongs to same faction
+                      const nMeta = provinceRegistry[prov[nIdx]];
+                      if (nMeta && nMeta.factionId === fId) {
+                        isBorder = true;
+                        break;
+                      }
+                    }
+                  }
+                }
+
+                if (isBorder) {
+                  baseC.lerp(new THREE.Color(0x000000), 0.5); // Darken heavily for internal borders
+                }
+                tempColor.copy(baseC);
+              }
             }
           }
         }
@@ -141,6 +206,13 @@ export function InstancedMap({
     if (meshRef.current.instanceColor) {
       meshRef.current.instanceColor.needsUpdate = true;
     }
+
+    // Explicitly notify the system that the heaviest work has finished
+    if (finishGeneration) {
+      requestAnimationFrame(() => {
+        finishGeneration();
+      });
+    }
   }, [
     heightMap,
     rivers,
@@ -151,6 +223,9 @@ export function InstancedMap({
     currentEpoch,
     viewMode,
     seaLevel,
+    finishGeneration, // Added dependency
+    showRivers,
+    showResources,
   ]);
 
   return (

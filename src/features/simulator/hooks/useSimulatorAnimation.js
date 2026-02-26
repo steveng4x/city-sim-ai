@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { mapW, mapH, factionColors } from "../lib/constants";
+import { mapW, mapH, factionColors } from "@/features/simulator";
 
 export function useSimulatorAnimation({
   miniRef,
@@ -35,11 +35,27 @@ export function useSimulatorAnimation({
       const idx = i * 4;
       if (viewMode === "city" && city && city[i] > 0) {
         const tId = Math.floor(city[i] / 10);
+        const density = city[i] % 10;
         const c = factionColors[(tId - 1) % factionColors.length];
-        const rgb = parseInt(c.slice(1), 16);
-        imgData.data[idx] = (rgb >> 16) & 255;
-        imgData.data[idx + 1] = (rgb >> 8) & 255;
-        imgData.data[idx + 2] = rgb & 255;
+        let r = parseInt(c.slice(1, 3), 16);
+        let g = parseInt(c.slice(3, 5), 16);
+        let b = parseInt(c.slice(5, 7), 16);
+
+        if (density < 5) {
+          const factor = (5 - density) * 0.15;
+          r = Math.round(r * (1 - factor));
+          g = Math.round(g * (1 - factor));
+          b = Math.round(b * (1 - factor));
+        } else if (density > 5) {
+          const factor = (density - 5) * 0.15;
+          r = Math.round(r + (255 - r) * factor);
+          g = Math.round(g + (255 - g) * factor);
+          b = Math.round(b + (255 - b) * factor);
+        }
+
+        imgData.data[idx] = r;
+        imgData.data[idx + 1] = g;
+        imgData.data[idx + 2] = b;
         imgData.data[idx + 3] = 255;
       } else if (heightMap[i] <= seaLevel) {
         imgData.data[idx] = 30;

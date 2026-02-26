@@ -1,6 +1,6 @@
 import React from "react";
 import { RefreshCw } from "lucide-react";
-import { mapW, mapH } from "../lib/constants";
+import { mapW, mapH } from "@/features/simulator";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Map3D } from "./Map3D";
@@ -14,9 +14,14 @@ export function SimulatorCanvas({
   resourceMap,
   citySnapshots,
   infrastructureSnapshots,
+  provinceSnapshots,
+  provinceRegistry,
   currentEpoch,
   viewMode,
   seaLevel,
+  finishGeneration,
+  showRivers,
+  showResources,
 }) {
   return (
     <main className="flex-1 bg-neutral-bg1 flex flex-col relative overflow-hidden">
@@ -29,9 +34,14 @@ export function SimulatorCanvas({
             resourceMap={resourceMap}
             citySnapshots={citySnapshots}
             infrastructureSnapshots={infrastructureSnapshots}
+            provinceSnapshots={provinceSnapshots}
+            provinceRegistry={provinceRegistry}
             currentEpoch={currentEpoch}
             viewMode={viewMode}
             seaLevel={seaLevel}
+            finishGeneration={finishGeneration}
+            showRivers={showRivers}
+            showResources={showResources}
           />
 
           {/* Info Overlay */}

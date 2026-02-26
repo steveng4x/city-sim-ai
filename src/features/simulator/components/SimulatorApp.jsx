@@ -1,15 +1,17 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { ArrowLeft, Building2 } from "lucide-react";
 import { SimulatorControls } from "./SimulatorControls";
 import { SimulatorCanvas } from "./SimulatorCanvas";
 import { SimulatorTimeline } from "./SimulatorTimeline";
 import { useSimulatorEngine } from "../hooks/useSimulatorEngine";
 import { useSimulatorAnimation } from "../hooks/useSimulatorAnimation";
-import { maxEpochs } from "../lib/constants";
+import { maxEpochs } from "@/features/simulator";
 import { motion } from "framer-motion";
 
 export function SimulatorApp({ onBackToDocs }) {
   const miniRef = useRef(null);
+  const [showRivers, setShowRivers] = useState(true);
+  const [showResources, setShowResources] = useState(true);
 
   const engine = useSimulatorEngine();
   const { startTransition } = useSimulatorAnimation({
@@ -27,6 +29,7 @@ export function SimulatorApp({ onBackToDocs }) {
     playing: engine.playing,
     setPlaying: engine.setPlaying,
     maxEpochs,
+    finishGeneration: engine.finishGeneration, // Added finishGeneration here
   });
 
   return (
@@ -55,7 +58,7 @@ export function SimulatorApp({ onBackToDocs }) {
           </div>
         </div>
         <div className="flex glass p-1 rounded-lg">
-          {["terrain", "heatmap", "city"].map((m) => (
+          {["terrain", "heatmap", "city", "province"].map((m) => (
             <button
               key={m}
               onClick={() => engine.setViewMode(m)}
@@ -68,7 +71,13 @@ export function SimulatorApp({ onBackToDocs }) {
       </header>
 
       <div className="flex flex-1 overflow-hidden relative">
-        <SimulatorControls {...engine} />
+        <SimulatorControls
+          {...engine}
+          showRivers={showRivers}
+          setShowRivers={setShowRivers}
+          showResources={showResources}
+          setShowResources={setShowResources}
+        />
 
         <div className="flex-1 flex flex-col z-0">
           <SimulatorCanvas
@@ -80,9 +89,14 @@ export function SimulatorApp({ onBackToDocs }) {
             resourceMap={engine.resourceMap}
             citySnapshots={engine.citySnapshots}
             infrastructureSnapshots={engine.infrastructureSnapshots}
+            provinceSnapshots={engine.provinceSnapshots}
+            provinceRegistry={engine.provinceRegistry}
             currentEpoch={engine.currentEpoch}
             viewMode={engine.viewMode}
             seaLevel={engine.seaLevel}
+            finishGeneration={engine.finishGeneration}
+            showRivers={showRivers}
+            showResources={showResources}
           />
           <SimulatorTimeline
             playing={engine.playing}

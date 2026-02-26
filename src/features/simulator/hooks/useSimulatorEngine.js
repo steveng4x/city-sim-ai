@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { generateHeightMap, computeRivers } from "../lib/terrainUtils";
-import { fetchOracleLore } from "../services/oracle";
-import { mapW, mapH, maxEpochs } from "../lib/constants";
+import { fetchOracleLore } from "@/services/oracle";
+import { mapW, mapH, maxEpochs } from "@/features/simulator";
 
 export function useSimulatorEngine() {
   const [seed, setSeed] = useState(Math.floor(Math.random() * 10000));
@@ -18,6 +18,8 @@ export function useSimulatorEngine() {
   const [resourceMap, setResourceMap] = useState(null);
   const [citySnapshots, setCitySnapshots] = useState([]);
   const [infrastructureSnapshots, setInfrastructureSnapshots] = useState([]);
+  const [provinceSnapshots, setProvinceSnapshots] = useState([]);
+  const [provinceRegistry, setProvinceRegistry] = useState({});
 
   const [lore, setLore] = useState(null);
   const [isGeneratingLore, setIsGeneratingLore] = useState(false);
@@ -31,14 +33,17 @@ export function useSimulatorEngine() {
 
       setIsGenerating(true);
       setPlaying(false);
+      console.log("executeGeneration STARTED with", { s, sl, fCount });
 
       // Run async to allow UI render to paint the "Loading" state
       setTimeout(async () => {
+        console.log("Inside setTimeout");
         // Yield an extra frame to ensure Framer Motion animation starts
         await new Promise((resolve) => requestAnimationFrame(resolve));
         await new Promise((resolve) => setTimeout(resolve, 10));
 
         // 1. Terrain Physics
+        console.log("Generating heightmap...");
         const hMap = generateHeightMap(mapW, mapH, s, 5, 0.5);
         const rmask = computeRivers(hMap, mapW, mapH, sl, 10);
 
@@ -128,10 +133,14 @@ export function useSimulatorEngine() {
 
         let snaps = [];
         let infraSnaps = []; // Snapshots of Roads and Structures (0: None, 1: Road, 2: Wall)
+        let provSnaps = [];
+        let pRegistry = {}; // provinceId -> { factionId, centerTileIndex, foundedEpoch }
+        let nextProvinceId = 1;
 
         // Grid Format: (FactionID * 10) + Density(1-9)
         let currentCity = new Uint8Array(mapW * mapH);
         let currentInfra = new Uint8Array(mapW * mapH);
+        let currentProv = new Uint16Array(mapW * mapH);
 
         let seeds = [];
         let attempts = 0;
@@ -159,11 +168,14 @@ export function useSimulatorEngine() {
         });
         snaps.push(new Uint8Array(currentCity));
         infraSnaps.push(new Uint8Array(currentInfra));
+        provSnaps.push(new Uint16Array(currentProv));
 
         // 4. Cellular Automata History Loop with Urban Clustering Logic
+        console.log("Starting cellular automata loop...");
         for (let ep = 1; ep <= maxEpochs; ep++) {
           // Yield to browser every 20 epochs so the loading spinner stays animated
           if (ep % 20 === 0) {
+            console.log("Yielding at epoch", ep);
             await new Promise((resolve) => setTimeout(resolve, 0));
           }
           let nextCity = new Uint8Array(currentCity);
@@ -440,10 +452,120 @@ export function useSimulatorEngine() {
               }
             }
           }
+
+          // Province Calculation (Every 5 epochs)
+          if (ep % 5 === 0) {
+            let nextProv = new Uint16Array(mapW * mapH);
+            let activeCenters = [];
+
+            // 1 & 2. Identify centers and assign stable IDs
+            for (let i = 0; i < mapW * mapH; i++) {
+              if (nextCity[i] > 0) {
+                let density = nextCity[i] % 10;
+                let factionId = Math.floor(nextCity[i] / 10);
+
+                if (density >= 5) {
+                  // Find existing province ID for this center, or mint a new one
+                  let pId = null;
+                  for (const [idParam, metadata] of Object.entries(pRegistry)) {
+                    if (
+                      metadata.centerTileIndex === i &&
+                      metadata.factionId === factionId
+                    ) {
+                      pId = parseInt(idParam);
+                      break;
+                    }
+                  }
+
+                  if (pId === null) {
+                    pId = nextProvinceId++;
+                    pRegistry[pId] = {
+                      id: pId,
+                      factionId: factionId,
+                      centerTileIndex: i,
+                      foundedEpoch: ep,
+                    };
+                  }
+
+                  activeCenters.push({
+                    idx: i,
+                    pId: pId,
+                    factionId: factionId,
+                    dist: 0,
+                  });
+                }
+              }
+            }
+
+            // Tie-breaking: Sort queue so smaller IDs are processed first at the same distance
+            activeCenters.sort((a, b) => a.pId - b.pId);
+
+            // 3. Multi-source BFS
+            let queue = activeCenters.slice();
+            let distMap = new Uint16Array(mapW * mapH).fill(65535); // Max distance initially
+
+            // Initialize queue and starting tiles
+            queue.forEach((center) => {
+              nextProv[center.idx] = center.pId;
+              distMap[center.idx] = 0;
+            });
+
+            const bfsNeighbors = [
+              { dx: 0, dy: -1 },
+              { dx: 0, dy: 1 },
+              { dx: -1, dy: 0 },
+              { dx: 1, dy: 0 },
+            ];
+
+            let head = 0;
+            let loopCounter = 0;
+            while (head < queue.length) {
+              loopCounter++;
+              if (loopCounter > 500000) {
+                console.error("BFS Infinite Loop Hit! Breaking.");
+                break;
+              }
+              const current = queue[head++];
+              const x = current.idx % mapW;
+              const y = Math.floor(current.idx / mapW);
+              const nDist = current.dist + 1;
+
+              for (let n of bfsNeighbors) {
+                const nx = x + n.dx;
+                const ny = y + n.dy;
+
+                if (nx >= 0 && nx < mapW && ny >= 0 && ny < mapH) {
+                  const nIdx = ny * mapW + nx;
+                  const nCity = nextCity[nIdx];
+                  const nFactionId = Math.floor(nCity / 10);
+
+                  // Only expand into valid tiles of the same faction
+                  if (nCity > 0 && nFactionId === current.factionId) {
+                    if (
+                      nDist < distMap[nIdx] ||
+                      (nDist === distMap[nIdx] && current.pId < nextProv[nIdx])
+                    ) {
+                      distMap[nIdx] = nDist;
+                      nextProv[nIdx] = current.pId;
+                      queue.push({
+                        idx: nIdx,
+                        pId: current.pId,
+                        factionId: current.factionId,
+                        dist: nDist,
+                      });
+                    }
+                  }
+                }
+              }
+            }
+            currentProv = nextProv;
+          }
+
           currentCity = nextCity;
           currentInfra = nextInfra;
           snaps.push(new Uint8Array(currentCity));
           infraSnaps.push(new Uint8Array(currentInfra));
+          provSnaps.push(new Uint16Array(currentProv)); // Province data will be updated correctly in next steps
         }
 
         setHeightMap(hMap);
@@ -452,12 +574,25 @@ export function useSimulatorEngine() {
         setResourceMap(resMap);
         setCitySnapshots(snaps);
         setInfrastructureSnapshots(infraSnaps);
+        setProvinceSnapshots(provSnaps);
+        setProvinceRegistry(pRegistry);
         setCurrentEpoch(0);
-        setIsGenerating(false);
+        console.log("ENGINE GENERATION COMPLETE!", {
+          mapW,
+          mapH,
+          epochs: maxEpochs,
+        });
+        // Do NOT set isGenerating to false here.
+        // InstancedMap will call finishGeneration when it actually renders.
       }, 10);
     },
     [seed, seaLevel, desiredFactions],
   );
+
+  const finishGeneration = useCallback(() => {
+    console.log("FINISH GENERATION CALLED FROM RENDERER!");
+    setIsGenerating(false);
+  }, []);
 
   // Initial Load
   useEffect(() => {
@@ -524,9 +659,12 @@ export function useSimulatorEngine() {
     resourceMap,
     citySnapshots,
     infrastructureSnapshots,
+    provinceSnapshots,
+    provinceRegistry,
     lore,
     isGeneratingLore,
     executeGeneration,
     dreamWorldWithAI,
+    finishGeneration,
   };
 }

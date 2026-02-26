@@ -15,9 +15,20 @@ import {
   Cpu,
 } from "lucide-react";
 import Orb from "./Orb";
-import { accentMap } from "../lib/constants";
+import CardNav from "./CardNav";
+import { accentMap } from "@/features/simulator";
 
 export function LandingPage({ onLaunchSimulator }) {
+  const [isScrolled, setIsScrolled] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // --- Framer Motion Variants ---
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -123,33 +134,47 @@ export function LandingPage({ onLaunchSimulator }) {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500 selection:text-white flex flex-col overflow-x-hidden">
       {/* ── NAV ── */}
-      <motion.nav
-        initial="hidden"
-        animate="visible"
-        variants={fadeIn}
-        className="sticky top-0 z-50 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-xl"
-      >
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse" />
-              <div className="absolute inset-0 w-2.5 h-2.5 bg-indigo-500 rounded-full animate-ping opacity-40" />
-            </div>
-            <span className="font-extrabold text-xl tracking-tight text-white">
-              CitySim<span className="text-indigo-400">.AI</span>
-            </span>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
-              v2.5
-            </span>
-          </div>
-          <button
-            onClick={onLaunchSimulator}
-            className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2 hover:shadow-indigo-500/40 hover:-translate-y-0.5"
-          >
-            <Play size={14} fill="currentColor" /> Launch Simulation
-          </button>
-        </div>
-      </motion.nav>
+      <motion.div initial="hidden" animate="visible" variants={fadeIn}>
+        <CardNav
+          scrolled={isScrolled}
+          onLaunch={onLaunchSimulator}
+          items={[
+            {
+              label: "Explore",
+              icon: <Layers className="w-5 h-5" />,
+              bgColor: "rgba(30, 41, 59, 1)", // slate-800
+              textColor: "#f1f5f9",
+              links: [
+                { label: "Features", href: "#features" },
+                { label: "How It Works", href: "#how-it-works" },
+                { label: "Stats", href: "#stats" },
+              ],
+            },
+            {
+              label: "Learn",
+              icon: <Wand2 className="w-5 h-5" />,
+              bgColor: "rgba(30, 41, 59, 1)", // slate-800
+              textColor: "#f1f5f9",
+              links: [
+                { label: "Logic Explanation", href: "#" },
+                { label: "Documentation", href: "#" },
+                { label: "Wiki", href: "#" },
+              ],
+            },
+            {
+              label: "Community",
+              icon: <Globe2 className="w-5 h-5" />,
+              bgColor: "rgba(30, 41, 59, 1)", // slate-800
+              textColor: "#f1f5f9",
+              links: [
+                { label: "GitHub Repository", href: "#" },
+                { label: "Discord Server", href: "#" },
+                { label: "Twitter / X", href: "#" },
+              ],
+            },
+          ]}
+        />
+      </motion.div>
 
       {/* ── HERO ── */}
       <main className="flex-1 flex flex-col items-center justify-center text-center px-4 py-24 sm:py-32 relative overflow-hidden">
@@ -247,11 +272,12 @@ export function LandingPage({ onLaunchSimulator }) {
 
       {/* ── STATS BAR ── */}
       <motion.div
+        id="stats"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
         variants={staggerContainer}
-        className="border-y border-slate-800/60 bg-slate-900/40 backdrop-blur-sm py-6"
+        className="border-y border-slate-800/60 bg-slate-900/40 backdrop-blur-sm py-6 relative z-10"
       >
         <div className="max-w-4xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           {stats.map((s) => (
@@ -318,7 +344,10 @@ export function LandingPage({ onLaunchSimulator }) {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section className="py-24 px-6 border-t border-slate-800/40">
+      <section
+        id="how-it-works"
+        className="py-24 px-6 border-t border-slate-800/40"
+      >
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial="hidden"

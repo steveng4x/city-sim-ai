@@ -1,7 +1,7 @@
 import React, { useRef, useMemo, useEffect } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { mapW, mapH } from "../lib/constants";
+import { mapW, mapH } from "@/features/simulator";
 
 const tempObject = new THREE.Object3D();
 const tempColor = new THREE.Color();

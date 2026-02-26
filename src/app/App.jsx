@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { LandingPage } from "./components/LandingPage";
-import { SimulatorApp } from "./components/SimulatorApp";
+import { LandingPage } from "@/features/landing/components/LandingPage";
+import { SimulatorApp } from "@/features/simulator";
 import { AnimatePresence } from "framer-motion";
 
 export default function App() {
