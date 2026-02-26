@@ -6,7 +6,6 @@ export function SimulatorTimeline({
   setPlaying,
   currentEpoch,
   maxEpochs,
-  animRef,
   startTransition,
 }) {
   return (
@@ -16,10 +15,6 @@ export function SimulatorTimeline({
           <button
             onClick={() => {
               setPlaying(false);
-              if (animRef.current) {
-                cancelAnimationFrame(animRef.current);
-                animRef.current = null;
-              }
               startTransition(currentEpoch, 0, 400);
             }}
             className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors"
@@ -39,10 +34,6 @@ export function SimulatorTimeline({
           <button
             onClick={() => {
               setPlaying(false);
-              if (animRef.current) {
-                cancelAnimationFrame(animRef.current);
-                animRef.current = null;
-              }
               startTransition(currentEpoch, maxEpochs, 400);
             }}
             className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors"

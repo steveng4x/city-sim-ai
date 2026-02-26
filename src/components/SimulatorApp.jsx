@@ -9,21 +9,17 @@ import { maxEpochs } from "../lib/constants";
 import { motion } from "framer-motion";
 
 export function SimulatorApp({ onBackToDocs }) {
-  const canvasRef = useRef(null);
   const miniRef = useRef(null);
-  const animRef = useRef(null);
-  const diffRef = useRef(null);
 
-  const engine = useSimulatorEngine(animRef, diffRef);
+  const engine = useSimulatorEngine();
   const { startTransition } = useSimulatorAnimation({
-    canvasRef,
     miniRef,
-    animRef,
-    diffRef,
     heightMap: engine.heightMap,
     rivers: engine.rivers,
     suitabilityMap: engine.suitabilityMap,
+    resourceMap: engine.resourceMap,
     citySnapshots: engine.citySnapshots,
+    infrastructureSnapshots: engine.infrastructureSnapshots,
     currentEpoch: engine.currentEpoch,
     setCurrentEpoch: engine.setCurrentEpoch,
     viewMode: engine.viewMode,
@@ -76,16 +72,23 @@ export function SimulatorApp({ onBackToDocs }) {
 
         <div className="flex-1 flex flex-col z-0">
           <SimulatorCanvas
-            canvasRef={canvasRef}
             miniRef={miniRef}
             isGenerating={engine.isGenerating}
+            heightMap={engine.heightMap}
+            rivers={engine.rivers}
+            suitabilityMap={engine.suitabilityMap}
+            resourceMap={engine.resourceMap}
+            citySnapshots={engine.citySnapshots}
+            infrastructureSnapshots={engine.infrastructureSnapshots}
+            currentEpoch={engine.currentEpoch}
+            viewMode={engine.viewMode}
+            seaLevel={engine.seaLevel}
           />
           <SimulatorTimeline
             playing={engine.playing}
             setPlaying={engine.setPlaying}
             currentEpoch={engine.currentEpoch}
             maxEpochs={maxEpochs}
-            animRef={animRef}
             startTransition={startTransition}
           />
         </div>

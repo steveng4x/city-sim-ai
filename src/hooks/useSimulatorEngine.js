@@ -3,7 +3,7 @@ import { generateHeightMap, computeRivers } from "../lib/terrainUtils";
 import { fetchOracleLore } from "../services/oracle";
 import { mapW, mapH, maxEpochs } from "../lib/constants";
 
-export function useSimulatorEngine(animRef, diffRef) {
+export function useSimulatorEngine() {
   const [seed, setSeed] = useState(Math.floor(Math.random() * 10000));
   const [seaLevel, setSeaLevel] = useState(0.38);
   const [desiredFactions, setDesiredFactions] = useState(4);
@@ -15,7 +15,9 @@ export function useSimulatorEngine(animRef, diffRef) {
   const [heightMap, setHeightMap] = useState(null);
   const [rivers, setRivers] = useState(null);
   const [suitabilityMap, setSuitabilityMap] = useState(null);
+  const [resourceMap, setResourceMap] = useState(null);
   const [citySnapshots, setCitySnapshots] = useState([]);
+  const [infrastructureSnapshots, setInfrastructureSnapshots] = useState([]);
 
   const [lore, setLore] = useState(null);
   const [isGeneratingLore, setIsGeneratingLore] = useState(false);
@@ -30,18 +32,34 @@ export function useSimulatorEngine(animRef, diffRef) {
       setIsGenerating(true);
       setPlaying(false);
 
-      // Cancel any in-flight rAF animation so stale diffs don't bleed into the new world
-      if (animRef?.current) {
-        cancelAnimationFrame(animRef.current);
-        animRef.current = null;
-        if (diffRef) diffRef.current = null;
-      }
+      // Run async to allow UI render to paint the "Loading" state
+      setTimeout(async () => {
+        // Yield an extra frame to ensure Framer Motion animation starts
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
-      // Run async to allow UI render
-      setTimeout(() => {
         // 1. Terrain Physics
         const hMap = generateHeightMap(mapW, mapH, s, 5, 0.5);
         const rmask = computeRivers(hMap, mapW, mapH, sl, 10);
+
+        // 1b. Resources Map (0: none, 1: Forest, 2: Gold)
+        const resMap = new Uint8Array(mapW * mapH);
+        for (let idx = 0; idx < mapW * mapH; idx++) {
+          if (hMap[idx] <= sl) continue; // No resources in ocean
+
+          // Seed forests in standard land (not too close to sea, not too high)
+          if (
+            hMap[idx] > sl + 0.05 &&
+            hMap[idx] < 0.65 &&
+            Math.random() < 0.03
+          ) {
+            resMap[idx] = 1; // Forest
+          }
+          // Seed gold near mountains
+          if (hMap[idx] > 0.6 && Math.random() < 0.02) {
+            resMap[idx] = 2; // Gold
+          }
+        }
 
         // 2. Suitability & Carrying Capacity Analysis
         const suitMap = new Float32Array(mapW * mapH);
@@ -77,6 +95,25 @@ export function useSimulatorEngine(animRef, diffRef) {
               }
             }
             score += waterBonus;
+
+            // Resource adjacency bonus
+            let resourceBonus = 0;
+            for (let dy = -2; dy <= 2; dy++) {
+              for (let dx = -2; dx <= 2; dx++) {
+                const nx = x + dx,
+                  ny = y + dy;
+                if (nx >= 0 && nx < mapW && ny >= 0 && ny < mapH) {
+                  const nIdx = ny * mapW + nx;
+                  const dist = Math.abs(dx) + Math.abs(dy);
+                  if (resMap[nIdx] === 1)
+                    resourceBonus = Math.max(resourceBonus, (3 - dist) * 0.15); // Forest
+                  if (resMap[nIdx] === 2)
+                    resourceBonus = Math.max(resourceBonus, (3 - dist) * 0.25); // Gold
+                }
+              }
+            }
+            score += resourceBonus;
+
             score = Math.max(0.01, Math.min(1.0, score));
             suitMap[idx] = score;
 
@@ -90,8 +127,12 @@ export function useSimulatorEngine(animRef, diffRef) {
         if (viableCells.length < fCount) viableCells = sortedCells; // Fallback
 
         let snaps = [];
+        let infraSnaps = []; // Snapshots of Roads and Structures (0: None, 1: Road, 2: Wall)
+
         // Grid Format: (FactionID * 10) + Density(1-9)
         let currentCity = new Uint8Array(mapW * mapH);
+        let currentInfra = new Uint8Array(mapW * mapH);
+
         let seeds = [];
         let attempts = 0;
         let minDist = 40; // Keep capitals far apart
@@ -113,17 +154,26 @@ export function useSimulatorEngine(animRef, diffRef) {
         seeds.forEach((s, i) => {
           // Capitals start strong (Level 5 City)
           currentCity[s.y * mapW + s.x] = (i + 1) * 10 + 5;
+          // Capital gets a starting wall
+          currentInfra[s.y * mapW + s.x] = 2;
         });
         snaps.push(new Uint8Array(currentCity));
+        infraSnaps.push(new Uint8Array(currentInfra));
 
         // 4. Cellular Automata History Loop with Urban Clustering Logic
         for (let ep = 1; ep <= maxEpochs; ep++) {
+          // Yield to browser every 20 epochs so the loading spinner stays animated
+          if (ep % 20 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
           let nextCity = new Uint8Array(currentCity);
+          let nextInfra = new Uint8Array(currentInfra);
 
           for (let y = 0; y < mapH; y++) {
             for (let x = 0; x < mapW; x++) {
               let idx = y * mapW + x;
               let val = currentCity[idx];
+              let infraVal = currentInfra[idx];
 
               if (val > 0) {
                 let tId = Math.floor(val / 10);
@@ -136,6 +186,7 @@ export function useSimulatorEngine(animRef, diffRef) {
                 // --- RULE 2: Trade Node Requirement ---
                 if (density >= 6) {
                   let nearWater = false;
+                  let nearRoad = false;
                   const nbs = [
                     { dx: 0, dy: 1 },
                     { dx: 0, dy: -1 },
@@ -148,9 +199,11 @@ export function useSimulatorEngine(animRef, diffRef) {
                     if (nx >= 0 && nx < mapW && ny >= 0 && ny < mapH) {
                       let nIdx = ny * mapW + nx;
                       if (rmask[nIdx] || hMap[nIdx] <= sl) nearWater = true;
+                      if (currentInfra[nIdx] === 1) nearRoad = true;
                     }
                   }
-                  if (!nearWater) maxCap = Math.min(maxCap, 6);
+                  // Softened requirement: needs either water OR a road connection to grow huge
+                  if (!nearWater && !nearRoad) maxCap = Math.min(maxCap, 6);
                 }
 
                 const neighbors = [
@@ -164,6 +217,49 @@ export function useSimulatorEngine(animRef, diffRef) {
                   { dx: 1, dy: -1 },
                 ];
 
+                // Action: Structure Spawning (Roads & Walls)
+                if (density >= 4) {
+                  let enemyBorder = false;
+
+                  neighbors.forEach((n) => {
+                    let nx = x + n.dx,
+                      ny = y + n.dy;
+                    if (nx >= 0 && nx < mapW && ny >= 0 && ny < mapH) {
+                      let nIdx = ny * mapW + nx;
+                      let nVal = currentCity[nIdx];
+
+                      // Wall logic Check
+                      if (nVal > 0 && Math.floor(nVal / 10) !== tId) {
+                        enemyBorder = true;
+                      }
+
+                      // Road logic: try to build road towards resources or other ally high-density cities
+                      if (
+                        infraVal === 0 &&
+                        hMap[nIdx] > sl &&
+                        !rmask[nIdx] &&
+                        currentInfra[nIdx] === 0
+                      ) {
+                        let nSuit = suitMap[nIdx];
+                        let nTId = Math.floor(nVal / 10);
+                        if (
+                          (nVal > 0 && nTId === tId && nVal % 10 >= 3) ||
+                          resMap[nIdx] > 0
+                        ) {
+                          if (Math.random() < 0.15) {
+                            nextInfra[nIdx] = 1; // Build road
+                          }
+                        }
+                      }
+                    }
+                  });
+
+                  // Build wall if on enemy border and don't have one
+                  if (enemyBorder && infraVal !== 2 && Math.random() < 0.1) {
+                    nextInfra[idx] = 2; // Wall
+                  }
+                }
+
                 // Action: Sprawl or Combat
                 neighbors.forEach((n) => {
                   let nx = x + n.dx,
@@ -176,6 +272,9 @@ export function useSimulatorEngine(animRef, diffRef) {
                     if (nVal === 0 && neighborSuit > 0.1) {
                       // Sprawl Logic
                       let sprawlChance = 0.05 * (neighborSuit * 3);
+                      // Extra chance to sprawl along roads
+                      if (currentInfra[nIdx] === 1) sprawlChance *= 2;
+
                       if (
                         Math.random() < sprawlChance &&
                         nextCity[nIdx] === 0
@@ -187,10 +286,20 @@ export function useSimulatorEngine(animRef, diffRef) {
                       // Border Conflict
                       if (nTId !== tId) {
                         let nDensity = nVal % 10;
-                        if (density > nDensity && Math.random() < 0.1) {
+                        let defBonus = currentInfra[nIdx] === 2 ? 3 : 0; // Wall defense
+
+                        if (
+                          density > nDensity + defBonus &&
+                          Math.random() < 0.1
+                        ) {
                           let degraded = nDensity - 2;
-                          nextCity[nIdx] =
-                            degraded <= 0 ? 0 : nTId * 10 + degraded;
+                          // If taking over a walled city, the wall is destroyed
+                          if (degraded <= 0) {
+                            nextCity[nIdx] = 0;
+                            nextInfra[nIdx] = 0;
+                          } else {
+                            nextCity[nIdx] = nTId * 10 + degraded;
+                          }
                         }
                       }
                     }
@@ -231,7 +340,39 @@ export function useSimulatorEngine(animRef, diffRef) {
                           currentCity[eIdx] === 0 &&
                           nextCity[eIdx] === 0
                         ) {
-                          nextCity[eIdx] = tId * 10 + 1;
+                          // Prevent landing adjacent to an enemy city
+                          let safeToLand = true;
+                          const landNeighbors = [
+                            { dx: 0, dy: -1 },
+                            { dx: 0, dy: 1 },
+                            { dx: -1, dy: 0 },
+                            { dx: 1, dy: 0 },
+                            { dx: -1, dy: -1 },
+                            { dx: 1, dy: 1 },
+                            { dx: -1, dy: 1 },
+                            { dx: 1, dy: -1 },
+                          ];
+                          for (let ln of landNeighbors) {
+                            let lnx = ex + ln.dx,
+                              lny = ey + ln.dy;
+                            if (
+                              lnx >= 0 &&
+                              lnx < mapW &&
+                              lny >= 0 &&
+                              lny < mapH
+                            ) {
+                              let lnIdx = lny * mapW + lnx;
+                              let lnVal = currentCity[lnIdx];
+                              if (lnVal > 0 && Math.floor(lnVal / 10) !== tId) {
+                                safeToLand = false;
+                                break;
+                              }
+                            }
+                          }
+
+                          if (safeToLand) {
+                            nextCity[eIdx] = tId * 10 + 1;
+                          }
                         }
                         break;
                       }
@@ -283,6 +424,15 @@ export function useSimulatorEngine(animRef, diffRef) {
                     }
                   }
 
+                  // Quicker upgrades if near roads
+                  if (
+                    growChance === 0 &&
+                    infraVal === 1 &&
+                    Math.random() < 0.02
+                  ) {
+                    growChance = 1;
+                  }
+
                   if (growChance > 0 && nextCity[idx] === val) {
                     nextCity[idx] = tId * 10 + (density + 1);
                   }
@@ -291,18 +441,22 @@ export function useSimulatorEngine(animRef, diffRef) {
             }
           }
           currentCity = nextCity;
+          currentInfra = nextInfra;
           snaps.push(new Uint8Array(currentCity));
+          infraSnaps.push(new Uint8Array(currentInfra));
         }
 
         setHeightMap(hMap);
         setRivers(rmask);
         setSuitabilityMap(suitMap);
+        setResourceMap(resMap);
         setCitySnapshots(snaps);
+        setInfrastructureSnapshots(infraSnaps);
         setCurrentEpoch(0);
         setIsGenerating(false);
       }, 10);
     },
-    [seed, seaLevel, desiredFactions, animRef, diffRef],
+    [seed, seaLevel, desiredFactions],
   );
 
   // Initial Load
@@ -367,7 +521,9 @@ export function useSimulatorEngine(animRef, diffRef) {
     heightMap,
     rivers,
     suitabilityMap,
+    resourceMap,
     citySnapshots,
+    infrastructureSnapshots,
     lore,
     isGeneratingLore,
     executeGeneration,

@@ -3,19 +3,35 @@ import { RefreshCw } from "lucide-react";
 import { mapW, mapH } from "../lib/constants";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function SimulatorCanvas({ canvasRef, miniRef, isGenerating }) {
+import { Map3D } from "./Map3D";
+
+export function SimulatorCanvas({
+  miniRef,
+  isGenerating,
+  heightMap,
+  rivers,
+  suitabilityMap,
+  resourceMap,
+  citySnapshots,
+  infrastructureSnapshots,
+  currentEpoch,
+  viewMode,
+  seaLevel,
+}) {
   return (
     <main className="flex-1 bg-neutral-bg1 flex flex-col relative overflow-hidden">
       <div className="flex-1 relative flex items-center justify-center p-8">
-        <div className="relative shadow-2xl shadow-black/80 rounded-xl overflow-hidden glass border-border-strong bg-black/40">
-          <canvas
-            ref={canvasRef}
-            className="block cursor-crosshair"
-            style={{
-              maxWidth: "100%",
-              maxHeight: "80vh",
-              aspectRatio: `${mapW}/${mapH}`,
-            }}
+        <div className="relative shadow-2xl shadow-black/80 rounded-xl overflow-hidden glass border-border-strong bg-black/40 w-full h-full">
+          <Map3D
+            heightMap={heightMap}
+            rivers={rivers}
+            suitabilityMap={suitabilityMap}
+            resourceMap={resourceMap}
+            citySnapshots={citySnapshots}
+            infrastructureSnapshots={infrastructureSnapshots}
+            currentEpoch={currentEpoch}
+            viewMode={viewMode}
+            seaLevel={seaLevel}
           />
 
           {/* Info Overlay */}
