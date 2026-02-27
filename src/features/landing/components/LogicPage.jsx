@@ -352,18 +352,34 @@ function TileGrid() {
             }
 
             return (
-              <div
+              <motion.div
                 key={c}
+                animate={
+                  border
+                    ? {
+                        boxShadow: [
+                          `0 0 0 0px rgba(244, 63, 94, 0.6)`,
+                          `0 0 0 8px rgba(244, 63, 94, 0)`,
+                        ],
+                      }
+                    : { boxShadow: "none" }
+                }
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeOut",
+                }}
                 style={{
                   width: "16px",
                   height: "16px",
                   background: bg,
                   border: `1px solid ${borderColor}`,
-                  outline: border ? `1px solid ${COLORS.bg}` : "none",
                   transition: "background 0.3s",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  position: "relative",
+                  zIndex: border ? 10 : 1,
                 }}
               >
                 {(state.type === "centerA" || state.type === "centerB") && (
@@ -376,7 +392,7 @@ function TileGrid() {
                     }}
                   />
                 )}
-              </div>
+              </motion.div>
             );
           })}
         </div>
