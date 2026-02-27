@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Play,
   Layers,
@@ -18,7 +19,8 @@ import Orb from "./Orb";
 import CardNav from "./CardNav";
 import { accentMap } from "@/features/simulator";
 
-export function LandingPage({ onLaunchSimulator }) {
+export function LandingPage() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = React.useState(false);
 
   React.useEffect(() => {
@@ -137,42 +139,52 @@ export function LandingPage({ onLaunchSimulator }) {
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
         <CardNav
           scrolled={isScrolled}
-          onLaunch={onLaunchSimulator}
-          items={[
-            {
-              label: "Explore",
-              icon: <Layers className="w-5 h-5" />,
-              bgColor: "rgba(30, 41, 59, 1)", // slate-800
-              textColor: "#f1f5f9",
-              links: [
-                { label: "Features", href: "#features" },
-                { label: "How It Works", href: "#how-it-works" },
-                { label: "Stats", href: "#stats" },
-              ],
-            },
-            {
-              label: "Learn",
-              icon: <Wand2 className="w-5 h-5" />,
-              bgColor: "rgba(30, 41, 59, 1)", // slate-800
-              textColor: "#f1f5f9",
-              links: [
-                { label: "Logic Explanation", href: "#" },
-                { label: "Documentation", href: "#" },
-                { label: "Wiki", href: "#" },
-              ],
-            },
-            {
-              label: "Community",
-              icon: <Globe2 className="w-5 h-5" />,
-              bgColor: "rgba(30, 41, 59, 1)", // slate-800
-              textColor: "#f1f5f9",
-              links: [
-                { label: "GitHub Repository", href: "#" },
-                { label: "Discord Server", href: "#" },
-                { label: "Twitter / X", href: "#" },
-              ],
-            },
-          ]}
+          onLaunch={() => navigate("/simulator")}
+          items={React.useMemo(
+            () => [
+              {
+                label: "Explore",
+                icon: <Layers className="w-5 h-5" />,
+                bgColor: "rgba(30, 41, 59, 1)", // slate-800
+                textColor: "#f1f5f9",
+                links: [
+                  { label: "Features", href: "#features" },
+                  { label: "How It Works", href: "#how-it-works" },
+                  { label: "Stats", href: "#stats" },
+                ],
+              },
+              {
+                label: "Learn",
+                icon: <Wand2 className="w-5 h-5" />,
+                bgColor: "rgba(30, 41, 59, 1)", // slate-800
+                textColor: "#f1f5f9",
+                links: [
+                  {
+                    label: "Logic Explanation",
+                    onClick: () => navigate("/logic"),
+                  },
+                  { label: "Documentation", href: "#" },
+                  { label: "Wiki", href: "#" },
+                ],
+              },
+              {
+                label: "Community",
+                icon: <Globe2 className="w-5 h-5" />,
+                bgColor: "rgba(30, 41, 59, 1)", // slate-800
+                textColor: "#f1f5f9",
+                links: [
+                  {
+                    label: "GitHub Repository",
+                    href: "https://github.com/steveng4x/city-sim-ai",
+                    target: "_blank",
+                  },
+                  { label: "Discord Server", href: "#" },
+                  { label: "Twitter / X", href: "#" },
+                ],
+              },
+            ],
+            [],
+          )}
         />
       </motion.div>
 
@@ -250,7 +262,7 @@ export function LandingPage({ onLaunchSimulator }) {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
           >
             <button
-              onClick={onLaunchSimulator}
+              onClick={() => navigate("/simulator")}
               className="cursor-pointer group flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-xl text-base font-bold transition-all duration-200 shadow-xl shadow-indigo-900/50 hover:shadow-indigo-500/30 hover:-translate-y-0.5"
             >
               <Play size={18} fill="currentColor" />
@@ -430,7 +442,7 @@ export function LandingPage({ onLaunchSimulator }) {
                 civilisations emerge in seconds.
               </p>
               <button
-                onClick={onLaunchSimulator}
+                onClick={() => navigate("/simulator")}
                 className="cursor-pointer inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-xl text-base font-bold transition-all duration-200 shadow-2xl shadow-indigo-900/60 hover:shadow-indigo-500/30 hover:-translate-y-0.5"
               >
                 <Play size={18} fill="currentColor" />

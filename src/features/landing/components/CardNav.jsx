@@ -225,6 +225,8 @@ const CardNav = ({
                     key={`${lnk.label}-${i}`}
                     className="nav-card-link inline-flex items-center justify-between no-underline cursor-pointer group text-[15px] font-medium"
                     href={lnk.href}
+                    target={lnk.target}
+                    rel={lnk.rel}
                     onClick={(e) => {
                       if (lnk.onClick) {
                         e.preventDefault();

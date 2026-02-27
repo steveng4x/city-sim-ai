@@ -1,11 +1,25 @@
-import React, { useState } from "react";
+import React from "react";
 import { LandingPage } from "@/features/landing/components/LandingPage";
+import ProvinceSystemDiagram from "@/features/landing/components/LogicPage";
 import { SimulatorApp } from "@/features/simulator";
 import { AnimatePresence } from "framer-motion";
+import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/simulator" element={<SimulatorApp />} />
+        <Route path="/logic" element={<ProvinceSystemDiagram />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
 
 export default function App() {
-  const [view, setView] = useState("landing");
-
   return (
     <>
       <style>{`
@@ -20,14 +34,9 @@ export default function App() {
         .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
         @media (min-width: 768px) { .chart-container { height: 350px; } }
       `}</style>
-
-      <AnimatePresence mode="wait">
-        {view === "landing" ? (
-          <LandingPage key="landing" onLaunchSimulator={() => setView("sim")} />
-        ) : (
-          <SimulatorApp key="sim" onBackToDocs={() => setView("landing")} />
-        )}
-      </AnimatePresence>
+      <HashRouter>
+        <AnimatedRoutes />
+      </HashRouter>
     </>
   );
 }

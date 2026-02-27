@@ -8,7 +8,10 @@ import { useSimulatorAnimation } from "../hooks/useSimulatorAnimation";
 import { maxEpochs } from "@/features/simulator";
 import { motion } from "framer-motion";
 
-export function SimulatorApp({ onBackToDocs }) {
+import { useNavigate } from "react-router-dom";
+
+export function SimulatorApp() {
+  const navigate = useNavigate();
   const miniRef = useRef(null);
   const [showRivers, setShowRivers] = useState(true);
   const [showResources, setShowResources] = useState(true);
@@ -42,7 +45,7 @@ export function SimulatorApp({ onBackToDocs }) {
       <header className="flex items-center justify-between px-6 py-4 glass-panel border-b border-border-default z-10 shrink-0">
         <div className="flex items-center gap-4">
           <button
-            onClick={onBackToDocs}
+            onClick={() => navigate("/")}
             className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-white transition-all"
           >
             <ArrowLeft size={20} />

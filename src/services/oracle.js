@@ -1,5 +1,5 @@
 export async function fetchOracleLore() {
-  const apiKey = "AIzaSyDsZXA9z0UsZeGtSCZvjDl8nMNEGSxUC5Q"; // Provide a valid key
+  const apiKey = "[ENCRYPTION_KEY]"; // Provide a valid key
 
   const prompt = `You are a fantasy historian. Create lore for a procedural world.
   Respond strictly in JSON: { "name": "string", "foundingMyth": "string", "culture": "string", "notableEvent": "string", "geography": { "waterAmount": 1-10, "roughness": 1-10, "factions": 2-5 } }`;
