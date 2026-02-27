@@ -17,12 +17,16 @@ export function SimulatorTimeline({
               setPlaying(false);
               startTransition(currentEpoch, 0, 400);
             }}
+            aria-label="Restart simulation"
+            title="Restart simulation"
             className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors"
           >
             <SkipBack size={20} />
           </button>
           <button
             onClick={() => setPlaying(!playing)}
+            aria-label={playing ? "Pause simulation" : "Play simulation"}
+            title={playing ? "Pause" : "Play"}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-brand hover:bg-brand-hover text-white shadow-glow transition-all"
           >
             {playing ? (
@@ -36,6 +40,8 @@ export function SimulatorTimeline({
               setPlaying(false);
               startTransition(currentEpoch, maxEpochs, 400);
             }}
+            aria-label="Jump to end"
+            title="Jump to end"
             className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors"
           >
             <SkipForward size={20} />
@@ -59,6 +65,7 @@ export function SimulatorTimeline({
             min="0"
             max={maxEpochs}
             value={currentEpoch}
+            aria-label="Simulation timeline"
             onChange={(e) => {
               setPlaying(false);
               const target = Number(e.target.value);
