@@ -5,6 +5,7 @@ import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/city-sim-ai/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: [{ find: "@", replacement: path.resolve(__dirname, "src") }],
