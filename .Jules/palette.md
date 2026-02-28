@@ -1,0 +1,3 @@
+## 2024-10-27 - Timeline Media Controls Accessibility
+**Learning:** Custom media controls (like play/pause, skip back/forward buttons, and timeline scrubbers) that rely entirely on icons without visible text are completely opaque to screen readers if not properly labelled.
+**Action:** Always ensure icon-only buttons have dynamic or descriptive `aria-label` attributes (e.g., toggling between "Play" and "Pause" based on state), and provide an `aria-label` on `<input type="range">` elements used for timeline scrubbing.

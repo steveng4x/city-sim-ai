@@ -13,6 +13,7 @@ export function SimulatorTimeline({
       <div className="max-w-4xl mx-auto flex items-center gap-6">
         <div className="flex gap-2 shrink-0">
           <button
+            aria-label="Restart simulation"
             onClick={() => {
               setPlaying(false);
               startTransition(currentEpoch, 0, 400);
@@ -22,6 +23,7 @@ export function SimulatorTimeline({
             <SkipBack size={20} />
           </button>
           <button
+            aria-label={playing ? "Pause simulation" : "Play simulation"}
             onClick={() => setPlaying(!playing)}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-brand hover:bg-brand-hover text-white shadow-glow transition-all"
           >
@@ -32,6 +34,7 @@ export function SimulatorTimeline({
             )}
           </button>
           <button
+            aria-label="Skip to end of simulation"
             onClick={() => {
               setPlaying(false);
               startTransition(currentEpoch, maxEpochs, 400);
@@ -59,6 +62,7 @@ export function SimulatorTimeline({
             min="0"
             max={maxEpochs}
             value={currentEpoch}
+            aria-label="Scrub simulation timeline"
             onChange={(e) => {
               setPlaying(false);
               const target = Number(e.target.value);
