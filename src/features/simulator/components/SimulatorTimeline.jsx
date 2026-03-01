@@ -17,13 +17,17 @@ export function SimulatorTimeline({
               setPlaying(false);
               startTransition(currentEpoch, 0, 400);
             }}
-            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors"
+            aria-label="Rewind to beginning"
+            title="Rewind to beginning"
+            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             <SkipBack size={20} />
           </button>
           <button
             onClick={() => setPlaying(!playing)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-brand hover:bg-brand-hover text-white shadow-glow transition-all"
+            aria-label={playing ? "Pause simulation" : "Play simulation"}
+            title={playing ? "Pause simulation" : "Play simulation"}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-brand hover:bg-brand-hover text-white shadow-glow transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-light"
           >
             {playing ? (
               <Pause size={20} fill="currentColor" />
@@ -36,7 +40,9 @@ export function SimulatorTimeline({
               setPlaying(false);
               startTransition(currentEpoch, maxEpochs, 400);
             }}
-            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors"
+            aria-label="Skip to end"
+            title="Skip to end"
+            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             <SkipForward size={20} />
           </button>
@@ -64,7 +70,9 @@ export function SimulatorTimeline({
               const target = Number(e.target.value);
               startTransition(currentEpoch, target, 400);
             }}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            aria-label="Timeline progress"
+            title="Timeline progress"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none focus-visible:rounded"
           />
         </div>
       </div>
