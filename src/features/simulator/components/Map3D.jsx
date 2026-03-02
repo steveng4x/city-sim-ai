@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment } from "@react-three/drei";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { InstancedMap } from "./InstancedMap";
 import { WarIndicators } from "./WarIndicators";
 import { mapW, mapH } from "@/features/simulator";
@@ -32,6 +33,9 @@ export function Map3D(props) {
         <Suspense fallback={null}>
           <InstancedMap {...props} />
           <WarIndicators {...props} />
+          <EffectComposer disableNormalPass>
+            <Bloom luminanceThreshold={1} mipmapBlur intensity={1.0} />
+          </EffectComposer>
         </Suspense>
 
         <OrbitControls

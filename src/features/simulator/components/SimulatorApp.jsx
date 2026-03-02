@@ -93,6 +93,7 @@ export function SimulatorApp() {
             citySnapshots={engine.citySnapshots}
             infrastructureSnapshots={engine.infrastructureSnapshots}
             provinceSnapshots={engine.provinceSnapshots}
+            warEventSnapshots={engine.warEventSnapshots}
             provinceRegistry={engine.provinceRegistry}
             currentEpoch={engine.currentEpoch}
             viewMode={engine.viewMode}

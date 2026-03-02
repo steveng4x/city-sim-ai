@@ -19,6 +19,7 @@ export function useSimulatorEngine() {
   const [citySnapshots, setCitySnapshots] = useState([]);
   const [infrastructureSnapshots, setInfrastructureSnapshots] = useState([]);
   const [provinceSnapshots, setProvinceSnapshots] = useState([]);
+  const [warEventSnapshots, setWarEventSnapshots] = useState([]);
   const [provinceRegistry, setProvinceRegistry] = useState({});
 
   const [lore, setLore] = useState(null);
@@ -134,6 +135,7 @@ export function useSimulatorEngine() {
         let snaps = [];
         let infraSnaps = []; // Snapshots of Roads and Structures (0: None, 1: Road, 2: Wall)
         let provSnaps = [];
+        let eventSnaps = []; // Array of arrays containing distinct events that happen each epoch
         let pRegistry = {}; // provinceId -> { factionId, centerTileIndex, foundedEpoch }
         let nextProvinceId = 1;
 
@@ -169,6 +171,7 @@ export function useSimulatorEngine() {
         snaps.push(new Uint8Array(currentCity));
         infraSnaps.push(new Uint8Array(currentInfra));
         provSnaps.push(new Uint16Array(currentProv));
+        eventSnaps.push([]);
 
         // 4. Cellular Automata History Loop with Urban Clustering Logic
         console.log("Starting cellular automata loop...");
@@ -180,6 +183,7 @@ export function useSimulatorEngine() {
           }
           let nextCity = new Uint8Array(currentCity);
           let nextInfra = new Uint8Array(currentInfra);
+          let currentEpochEvents = [];
 
           for (let y = 0; y < mapH; y++) {
             for (let x = 0; x < mapW; x++) {
@@ -292,6 +296,7 @@ export function useSimulatorEngine() {
                         nextCity[nIdx] === 0
                       ) {
                         nextCity[nIdx] = tId * 10 + 1; // Start as village
+                        currentProv[nIdx] = currentProv[idx];
                       }
                     } else if (nVal > 0) {
                       let nTId = Math.floor(nVal / 10);
@@ -307,8 +312,179 @@ export function useSimulatorEngine() {
                           let degraded = nDensity - 2;
                           // If taking over a walled city, the wall is destroyed
                           if (degraded <= 0) {
-                            nextCity[nIdx] = 0;
-                            nextInfra[nIdx] = 0;
+                            // MULTI-TILE CONQUEST: Deep Strike Mechanics
+                            // Determine momentum based on attacker's density
+                            let momentum = 1;
+                            if (density >= 8) momentum = 3;
+                            else if (density >= 6) momentum = 2;
+
+                            // CRITICAL PUSH: Small chance for a massive breakthrough!
+                            const isCritical = Math.random() < 0.35; // 35% chance
+                            if (isCritical) {
+                              momentum *= 8;
+                              currentEpochEvents.push({
+                                type: "CRITICAL_PUSH",
+                                x: x + n.dx,
+                                y: y + n.dy,
+                              });
+                            }
+
+                            // Pierce along the attack vector
+                            let cx = x + n.dx;
+                            let cy = y + n.dy;
+
+                            for (let step = 0; step < momentum; step++) {
+                              if (
+                                cx >= 0 &&
+                                cx < mapW &&
+                                cy >= 0 &&
+                                cy < mapH
+                              ) {
+                                let cIdx = cy * mapW + cx;
+                                let cVal = currentCity[cIdx];
+
+                                // Only pierce into enemy territory or empty land, stop at water
+                                if (
+                                  hMap[cIdx] <= sl ||
+                                  (cVal > 0 && Math.floor(cVal / 10) === tId)
+                                ) {
+                                  break; // Momentum halted by water or hitting own territory
+                                }
+
+                                // Helper to check and flip province capital or 50% loss
+                                const processTileLoss = (
+                                  targetIdx,
+                                  targetFactionId,
+                                ) => {
+                                  let triggerFlip = false;
+                                  let provinceToFlip = null;
+
+                                  // 1. Check Capital Fall
+                                  for (const [pIdStr, meta] of Object.entries(
+                                    pRegistry,
+                                  )) {
+                                    if (
+                                      meta.centerTileIndex === targetIdx &&
+                                      meta.factionId === targetFactionId
+                                    ) {
+                                      triggerFlip = true;
+                                      provinceToFlip = pIdStr;
+                                      break;
+                                    }
+                                  }
+
+                                  // 2. Check 50% Territory Loss
+                                  if (!triggerFlip) {
+                                    let pId = currentProv[targetIdx];
+                                    if (
+                                      pId > 0 &&
+                                      pRegistry[pId] &&
+                                      pRegistry[pId].factionId ===
+                                        targetFactionId
+                                    ) {
+                                      pRegistry[pId].lostTilesCount =
+                                        (pRegistry[pId].lostTilesCount || 0) +
+                                        1;
+                                      if (
+                                        pRegistry[pId].baselineSize > 0 &&
+                                        pRegistry[pId].lostTilesCount >=
+                                          pRegistry[pId].baselineSize / 2
+                                      ) {
+                                        triggerFlip = true;
+                                        provinceToFlip = pId;
+                                      }
+                                    }
+                                  }
+
+                                  // If province collapses, flip all its existing cities to the attacker
+                                  if (triggerFlip && provinceToFlip) {
+                                    pRegistry[provinceToFlip].factionId = tId;
+
+                                    // Log the massive global event for the renderer
+                                    currentEpochEvents.push({
+                                      type: "PROVINCE_FALL",
+                                      x: cx,
+                                      y: cy,
+                                      pId: provinceToFlip,
+                                    });
+
+                                    for (let i = 0; i < mapW * mapH; i++) {
+                                      if (
+                                        currentProv[i] == provinceToFlip &&
+                                        nextCity[i] > 0
+                                      ) {
+                                        if (
+                                          Math.floor(nextCity[i] / 10) ===
+                                          targetFactionId
+                                        ) {
+                                          let tileDensity = nextCity[i] % 10;
+                                          nextCity[i] = tId * 10 + tileDensity;
+                                          nextInfra[i] = 0; // Structures are destroyed during mass surrender/collapse
+                                        }
+                                      }
+                                    }
+                                  }
+                                };
+
+                                // Attacker claims the tile (Density 1 village) to push the frontline!
+                                nextCity[cIdx] = tId * 10 + 1;
+                                nextInfra[cIdx] = 0;
+                                currentProv[cIdx] = currentProv[idx]; // Keep province view synced
+
+                                // If the tile was occupied by an enemy, check for collapse
+                                if (cVal > 0) {
+                                  let cTId = Math.floor(cVal / 10);
+                                  if (cTId !== tId) processTileLoss(cIdx, cTId);
+                                }
+
+                                // Area of Impact (Splash)
+                                const splashNeighbors = [
+                                  { dx: 0, dy: -1 },
+                                  { dx: 0, dy: 1 },
+                                  { dx: -1, dy: 0 },
+                                  { dx: 1, dy: 0 },
+                                  { dx: -1, dy: -1 },
+                                  { dx: 1, dy: 1 },
+                                  { dx: -1, dy: 1 },
+                                  { dx: 1, dy: -1 },
+                                ];
+
+                                splashNeighbors.forEach((sn) => {
+                                  if (Math.random() < 0.4) {
+                                    // 40% splash chance
+                                    let sx = cx + sn.dx;
+                                    let sy = cy + sn.dy;
+                                    if (
+                                      sx >= 0 &&
+                                      sx < mapW &&
+                                      sy >= 0 &&
+                                      sy < mapH
+                                    ) {
+                                      let sIdx = sy * mapW + sx;
+                                      let sVal = currentCity[sIdx];
+                                      // Only splash enemy or neutral (not water, not own)
+                                      if (
+                                        hMap[sIdx] > sl &&
+                                        (sVal === 0 ||
+                                          Math.floor(sVal / 10) !== tId)
+                                      ) {
+                                        nextCity[sIdx] = tId * 10 + 1;
+                                        nextInfra[sIdx] = 0;
+                                        currentProv[sIdx] = currentProv[idx]; // Keep province view synced
+                                        if (sVal > 0) {
+                                          let sTId = Math.floor(sVal / 10);
+                                          if (sTId !== tId)
+                                            processTileLoss(sIdx, sTId);
+                                        }
+                                      }
+                                    }
+                                  }
+                                });
+                              }
+                              // Advance the spearhead
+                              cx += n.dx;
+                              cy += n.dy;
+                            }
                           } else {
                             nextCity[nIdx] = nTId * 10 + degraded;
                           }
@@ -384,6 +560,7 @@ export function useSimulatorEngine() {
 
                           if (safeToLand) {
                             nextCity[eIdx] = tId * 10 + 1;
+                            currentProv[eIdx] = currentProv[idx];
                           }
                         }
                         break;
@@ -467,6 +644,8 @@ export function useSimulatorEngine() {
                 if (density >= 5) {
                   // Find existing province ID for this center, or mint a new one
                   let pId = null;
+
+                  // Phase 1: Does this exact tile already have a province?
                   for (const [idParam, metadata] of Object.entries(pRegistry)) {
                     if (
                       metadata.centerTileIndex === i &&
@@ -474,6 +653,32 @@ export function useSimulatorEngine() {
                     ) {
                       pId = parseInt(idParam);
                       break;
+                    }
+                  }
+
+                  // Phase 2: If no exact match, should we merge into a nearby big capital?
+                  if (pId === null) {
+                    let cx = i % mapW;
+                    let cy = Math.floor(i / mapW);
+                    let foundNearby = false;
+
+                    for (const [idParam, metadata] of Object.entries(
+                      pRegistry,
+                    )) {
+                      if (metadata.factionId === factionId) {
+                        let px = metadata.centerTileIndex % mapW;
+                        let py = Math.floor(metadata.centerTileIndex / mapW);
+                        let dist = Math.abs(cx - px) + Math.abs(cy - py);
+                        if (dist <= 20) {
+                          // Too close to an existing capital of the same faction, merge!
+                          foundNearby = true;
+                          break;
+                        }
+                      }
+                    }
+
+                    if (foundNearby) {
+                      continue; // Skip adding this to activeCenters, let the nearby capital absorb it
                     }
                   }
 
@@ -503,11 +708,13 @@ export function useSimulatorEngine() {
             // 3. Multi-source BFS
             let queue = activeCenters.slice();
             let distMap = new Uint16Array(mapW * mapH).fill(65535); // Max distance initially
+            let provSizes = {}; // Track territory volume for 50% rule
 
             // Initialize queue and starting tiles
             queue.forEach((center) => {
               nextProv[center.idx] = center.pId;
               distMap[center.idx] = 0;
+              provSizes[center.pId] = 1;
             });
 
             const bfsNeighbors = [
@@ -547,6 +754,8 @@ export function useSimulatorEngine() {
                     ) {
                       distMap[nIdx] = nDist;
                       nextProv[nIdx] = current.pId;
+                      provSizes[current.pId] =
+                        (provSizes[current.pId] || 0) + 1;
                       queue.push({
                         idx: nIdx,
                         pId: current.pId,
@@ -559,6 +768,12 @@ export function useSimulatorEngine() {
               }
             }
             currentProv = nextProv;
+
+            // Record province baseline size for 50% capitulation mechanic
+            for (const [pId, meta] of Object.entries(pRegistry)) {
+              meta.baselineSize = provSizes[pId] || 0;
+              meta.lostTilesCount = 0;
+            }
           }
 
           currentCity = nextCity;
@@ -566,6 +781,7 @@ export function useSimulatorEngine() {
           snaps.push(new Uint8Array(currentCity));
           infraSnaps.push(new Uint8Array(currentInfra));
           provSnaps.push(new Uint16Array(currentProv)); // Province data will be updated correctly in next steps
+          eventSnaps.push(currentEpochEvents);
         }
 
         setHeightMap(hMap);
@@ -575,6 +791,7 @@ export function useSimulatorEngine() {
         setCitySnapshots(snaps);
         setInfrastructureSnapshots(infraSnaps);
         setProvinceSnapshots(provSnaps);
+        setWarEventSnapshots(eventSnaps);
         setProvinceRegistry(pRegistry);
         setCurrentEpoch(0);
         console.log("ENGINE GENERATION COMPLETE!", {
@@ -660,6 +877,7 @@ export function useSimulatorEngine() {
     citySnapshots,
     infrastructureSnapshots,
     provinceSnapshots,
+    warEventSnapshots,
     provinceRegistry,
     lore,
     isGeneratingLore,

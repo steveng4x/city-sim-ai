@@ -15,6 +15,7 @@ export function SimulatorCanvas({
   citySnapshots,
   infrastructureSnapshots,
   provinceSnapshots,
+  warEventSnapshots,
   provinceRegistry,
   currentEpoch,
   viewMode,
@@ -35,6 +36,7 @@ export function SimulatorCanvas({
             citySnapshots={citySnapshots}
             infrastructureSnapshots={infrastructureSnapshots}
             provinceSnapshots={provinceSnapshots}
+            warEventSnapshots={warEventSnapshots}
             provinceRegistry={provinceRegistry}
             currentEpoch={currentEpoch}
             viewMode={viewMode}

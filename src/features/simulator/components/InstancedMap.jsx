@@ -22,6 +22,7 @@ export function InstancedMap({
   showResources,
 }) {
   const meshRef = useRef();
+  const borderMeshRef = useRef();
 
   const densityAlpha = (d) =>
     d >= 7 ? 1.0 : d >= 5 ? 0.95 : d >= 3 ? 0.6 : 0.25;
@@ -33,6 +34,8 @@ export function InstancedMap({
     const infra = infrastructureSnapshots
       ? infrastructureSnapshots[currentEpoch]
       : null;
+
+    let borderCount = 0;
 
     for (let y = 0; y < mapH; y++) {
       for (let x = 0; x < mapW; x++) {
@@ -165,13 +168,12 @@ export function InstancedMap({
                   baseC.lerp(new THREE.Color(0x000000), Math.abs(jitter));
                 }
 
-                // Look for borders without writing shaders – simple check across neighbors to see if it's the edge of a province
                 let isBorder = false;
                 const neighbors = [
-                  { dx: 0, dy: -1 },
-                  { dx: 0, dy: 1 },
-                  { dx: -1, dy: 0 },
-                  { dx: 1, dy: 0 },
+                  { dx: 0, dy: -1, ox: 0, oz: -0.5, sx: 1.05, sz: 0.1 },
+                  { dx: 0, dy: 1, ox: 0, oz: 0.5, sx: 1.05, sz: 0.1 },
+                  { dx: -1, dy: 0, ox: -0.5, oz: 0, sx: 0.1, sz: 1.05 },
+                  { dx: 1, dy: 0, ox: 0.5, oz: 0, sx: 0.1, sz: 1.05 },
                 ];
 
                 for (let n of neighbors) {
@@ -184,14 +186,39 @@ export function InstancedMap({
                       const nMeta = provinceRegistry[prov[nIdx]];
                       if (nMeta && nMeta.factionId === fId) {
                         isBorder = true;
-                        break;
+
+                        // Add a glowing border instance exactly on the edge
+                        if (
+                          borderMeshRef.current &&
+                          borderCount < mapW * mapH * 4
+                        ) {
+                          tempObject.position.set(
+                            x - mapW / 2 + n.ox,
+                            zPos / 2 + zPos / 2 + 0.05,
+                            y - mapH / 2 + n.oz,
+                          );
+                          tempObject.scale.set(n.sx, 0.06, n.sz);
+                          tempObject.updateMatrix();
+                          borderMeshRef.current.setMatrixAt(
+                            borderCount,
+                            tempObject.matrix,
+                          );
+
+                          // Bright cyan/white neutral glow, less intense than before
+                          tempColor.setHex(0x00ffff).multiplyScalar(2.0);
+                          borderMeshRef.current.setColorAt(
+                            borderCount,
+                            tempColor,
+                          );
+                          borderCount++;
+                        }
                       }
                     }
                   }
                 }
 
                 if (isBorder) {
-                  baseC.lerp(new THREE.Color(0x000000), 0.5); // Darken heavily for internal borders
+                  baseC.lerp(new THREE.Color(0x000000), 0.2); // Slightly darken base tile
                 }
                 tempColor.copy(baseC);
               }
@@ -205,6 +232,14 @@ export function InstancedMap({
     meshRef.current.instanceMatrix.needsUpdate = true;
     if (meshRef.current.instanceColor) {
       meshRef.current.instanceColor.needsUpdate = true;
+    }
+
+    if (borderMeshRef.current) {
+      borderMeshRef.current.count = borderCount;
+      borderMeshRef.current.instanceMatrix.needsUpdate = true;
+      if (borderMeshRef.current.instanceColor) {
+        borderMeshRef.current.instanceColor.needsUpdate = true;
+      }
     }
 
     // Explicitly notify the system that the heaviest work has finished
@@ -229,14 +264,21 @@ export function InstancedMap({
   ]);
 
   return (
-    <instancedMesh
-      ref={meshRef}
-      args={[null, null, mapW * mapH]}
-      castShadow
-      receiveShadow
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial />
-    </instancedMesh>
+    <group>
+      <instancedMesh
+        ref={meshRef}
+        args={[null, null, mapW * mapH]}
+        castShadow
+        receiveShadow
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial />
+      </instancedMesh>
+
+      <instancedMesh ref={borderMeshRef} args={[null, null, mapW * mapH]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial toneMapped={false} />
+      </instancedMesh>
+    </group>
   );
 }
