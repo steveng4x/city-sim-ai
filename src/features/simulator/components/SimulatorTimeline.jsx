@@ -13,17 +13,21 @@ export function SimulatorTimeline({
       <div className="max-w-4xl mx-auto flex items-center gap-6">
         <div className="flex gap-2 shrink-0">
           <button
+            aria-label="Restart simulation"
+            title="Restart simulation"
             onClick={() => {
               setPlaying(false);
               startTransition(currentEpoch, 0, 400);
             }}
-            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors"
+            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand focus:outline-none transition-colors"
           >
             <SkipBack size={20} />
           </button>
           <button
+            aria-label={playing ? "Pause simulation" : "Play simulation"}
+            title={playing ? "Pause simulation" : "Play simulation"}
             onClick={() => setPlaying(!playing)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-brand hover:bg-brand-hover text-white shadow-glow transition-all"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-brand hover:bg-brand-hover text-white shadow-glow focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-bg2 focus-visible:ring-brand focus:outline-none transition-all"
           >
             {playing ? (
               <Pause size={20} fill="currentColor" />
@@ -32,11 +36,13 @@ export function SimulatorTimeline({
             )}
           </button>
           <button
+            aria-label="Skip to end of simulation"
+            title="Skip to end of simulation"
             onClick={() => {
               setPlaying(false);
               startTransition(currentEpoch, maxEpochs, 400);
             }}
-            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary transition-colors"
+            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-text-primary focus-visible:ring-2 focus-visible:ring-brand focus:outline-none transition-colors"
           >
             <SkipForward size={20} />
           </button>
@@ -55,6 +61,7 @@ export function SimulatorTimeline({
             ></div>
           </div>
           <input
+            aria-label="Simulation timeline"
             type="range"
             min="0"
             max={maxEpochs}
@@ -64,7 +71,7 @@ export function SimulatorTimeline({
               const target = Number(e.target.value);
               startTransition(currentEpoch, target, 400);
             }}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-brand focus:outline-none"
           />
         </div>
       </div>
