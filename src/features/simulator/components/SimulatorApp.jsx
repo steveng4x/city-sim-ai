@@ -46,7 +46,9 @@ export function SimulatorApp() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/")}
-            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-white transition-all"
+            aria-label="Go back to home"
+            title="Go back to home"
+            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             <ArrowLeft size={20} />
           </button>
