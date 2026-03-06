@@ -191,7 +191,10 @@ export function SimulatorControls({
           </span>
           <button
             onClick={() => setShowRivers(!showRivers)}
-            className={`w-8 h-4 rounded-full transition-colors relative ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
+            role="switch"
+            aria-checked={showRivers}
+            aria-label="Toggle Rivers"
+            className={`w-8 h-4 rounded-full transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
               className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showRivers ? "translate-x-4" : "translate-x-1"}`}
@@ -205,7 +208,10 @@ export function SimulatorControls({
           </span>
           <button
             onClick={() => setShowResources(!showResources)}
-            className={`w-8 h-4 rounded-full transition-colors relative ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
+            role="switch"
+            aria-checked={showResources}
+            aria-label="Toggle Resources"
+            className={`w-8 h-4 rounded-full transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
               className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showResources ? "translate-x-4" : "translate-x-1"}`}
