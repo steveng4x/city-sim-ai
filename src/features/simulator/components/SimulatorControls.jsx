@@ -191,6 +191,9 @@ export function SimulatorControls({
           </span>
           <button
             onClick={() => setShowRivers(!showRivers)}
+            role="switch"
+            aria-checked={showRivers}
+            aria-label="Toggle Rivers"
             className={`w-8 h-4 rounded-full transition-colors relative ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
@@ -205,6 +208,9 @@ export function SimulatorControls({
           </span>
           <button
             onClick={() => setShowResources(!showResources)}
+            role="switch"
+            aria-checked={showResources}
+            aria-label="Toggle Resources"
             className={`w-8 h-4 rounded-full transition-colors relative ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
