@@ -46,7 +46,9 @@ export function SimulatorApp() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/")}
-            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-white transition-all"
+            aria-label="Go back to landing page"
+            title="Go back to landing page"
+            className="p-2 rounded-full hover:bg-neutral-bg4 text-text-secondary hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-bg1"
           >
             <ArrowLeft size={20} />
           </button>
