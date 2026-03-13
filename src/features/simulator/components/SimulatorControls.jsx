@@ -155,43 +155,48 @@ export function SimulatorControls({
         </div>
 
         <div className="space-y-3">
-          <div className="flex justify-between text-xs text-text-secondary">
+          <label htmlFor="seaLevel" className="flex justify-between text-xs text-text-secondary">
             <span>Sea Level</span>{" "}
             <span className="text-white">{Math.round(seaLevel * 100)}%</span>
-          </div>
+          </label>
           <input
+            id="seaLevel"
             type="range"
             min="0.2"
             max="0.6"
             step="0.01"
             value={seaLevel}
             onChange={(e) => setSeaLevel(Number(e.target.value))}
-            className="w-full h-1.5 bg-neutral-bg4 rounded-lg appearance-none cursor-pointer accent-brand"
+            className="w-full h-1.5 bg-neutral-bg4 rounded-lg appearance-none cursor-pointer accent-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-bg1"
           />
         </div>
 
         <div className="space-y-3">
-          <div className="flex justify-between text-xs text-text-secondary">
+          <label htmlFor="factions" className="flex justify-between text-xs text-text-secondary">
             <span>Factions</span>{" "}
             <span className="text-white">{desiredFactions}</span>
-          </div>
+          </label>
           <input
+            id="factions"
             type="range"
             min="2"
             max="5"
             value={desiredFactions}
             onChange={(e) => setDesiredFactions(Number(e.target.value))}
-            className="w-full h-1.5 bg-neutral-bg4 rounded-lg appearance-none cursor-pointer accent-brand"
+            className="w-full h-1.5 bg-neutral-bg4 rounded-lg appearance-none cursor-pointer accent-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-bg1"
           />
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold">
+          <span id="rivers-label" className="text-xs text-text-secondary uppercase tracking-widest font-bold">
             Rivers
           </span>
           <button
+            role="switch"
+            aria-checked={showRivers}
+            aria-labelledby="rivers-label"
             onClick={() => setShowRivers(!showRivers)}
-            className={`w-8 h-4 rounded-full transition-colors relative ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
+            className={`w-8 h-4 rounded-full transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-bg1 ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
               className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showRivers ? "translate-x-4" : "translate-x-1"}`}
@@ -200,12 +205,15 @@ export function SimulatorControls({
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold">
+          <span id="resources-label" className="text-xs text-text-secondary uppercase tracking-widest font-bold">
             Resources
           </span>
           <button
+            role="switch"
+            aria-checked={showResources}
+            aria-labelledby="resources-label"
             onClick={() => setShowResources(!showResources)}
-            className={`w-8 h-4 rounded-full transition-colors relative ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
+            className={`w-8 h-4 rounded-full transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-bg1 ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
               className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showResources ? "translate-x-4" : "translate-x-1"}`}
