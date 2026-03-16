@@ -163,6 +163,10 @@ export function LandingPage() {
                     label: "Logic Explanation",
                     onClick: () => navigate("/logic"),
                   },
+                  {
+                    label: "Flowchart Tool",
+                    onClick: () => navigate("/tools/flowchart"),
+                  },
                   { label: "Documentation", href: "#" },
                   { label: "Wiki", href: "#" },
                 ],

@@ -1,6 +1,7 @@
 import React from "react";
 import { LandingPage } from "@/features/landing/components/LandingPage";
 import ProvinceSystemDiagram from "@/features/landing/components/LogicPage";
+import FlowchartToolPage from "@/features/tools/components/FlowchartToolPage";
 import { SimulatorApp } from "@/features/simulator";
 import { AnimatePresence } from "framer-motion";
 import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
@@ -14,6 +15,7 @@ function AnimatedRoutes() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/simulator" element={<SimulatorApp />} />
         <Route path="/logic" element={<ProvinceSystemDiagram />} />
+        <Route path="/tools/flowchart" element={<FlowchartToolPage />} />
       </Routes>
     </AnimatePresence>
   );

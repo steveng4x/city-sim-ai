@@ -74,7 +74,7 @@ Make sure you have Node.js and npm installed.
    ```
 
 4. Add your Gemini API Key:
-   Open `src/App.jsx`, locate the `dreamWorldWithAI` function, and paste your key into the `apiKey` variable.
+   Create a local `.env` file and set `GEMINI_API_KEY=your_key_here`. Optionally set `GEMINI_MODEL=gemini-2.5-flash` to override the default server-side model.
 5. Start the development server:
 
    ```bash
