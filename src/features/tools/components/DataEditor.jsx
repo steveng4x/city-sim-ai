@@ -1,8 +1,8 @@
 export function DataEditor({
-  editorJson,
+  editorMermaid,
   errorMessage,
   onChange,
-  onFormatJson,
+  onFormatMermaid,
   isFullscreen = false,
 }) {
   return (
@@ -13,25 +13,25 @@ export function DataEditor({
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Data Editor
+              Mermaid Editor
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Modify the underlying flowchart JSON and render changes when
+              Modify the underlying Mermaid diagram and render changes when
               ready.
             </p>
           </div>
           <button
             type="button"
-            onClick={onFormatJson}
+            onClick={onFormatMermaid}
             className="rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-200 transition hover:border-violet-400/40 hover:bg-violet-500/15"
           >
-            Format JSON
+            Format Mermaid
           </button>
         </div>
       </div>
       <div className="relative flex-1 bg-slate-950/55">
         <textarea
-          value={editorJson}
+          value={editorMermaid}
           onChange={(event) => onChange(event.target.value)}
           spellCheck={false}
           className="absolute inset-0 h-full w-full resize-none bg-transparent p-5 font-mono text-sm leading-7 text-emerald-300 outline-none"

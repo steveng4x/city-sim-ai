@@ -1,11 +1,11 @@
 import React from "react";
 import {
-  explainFlowchartJson,
+  explainFlowchartMermaid,
   generateFlowchartFromPrompt,
 } from "@/features/tools/utils/flowchartApi";
 
 export function useFlowchartAi({
-  editorJson,
+  editorMermaid,
   onApplyData,
   onStatusChange,
   onErrorChange,
@@ -71,7 +71,7 @@ export function useFlowchartAi({
     setExplainError("");
 
     try {
-      const result = await explainFlowchartJson(editorJson, {
+      const result = await explainFlowchartMermaid(editorMermaid, {
         signal: controller.signal,
       });
       setExplainContent(result.content);
@@ -88,7 +88,7 @@ export function useFlowchartAi({
 
       setIsExplainLoading(false);
     }
-  }, [editorJson]);
+  }, [editorMermaid]);
 
   React.useEffect(() => {
     return () => {

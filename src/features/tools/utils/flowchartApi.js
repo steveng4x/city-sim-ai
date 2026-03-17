@@ -101,7 +101,7 @@ export async function listFlowchartFiles() {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
-    throw new Error(payload.error || "Failed to load JSON directory.");
+    throw new Error(payload.error || "Failed to load flowchart directory.");
   }
 
   return response.json();
@@ -120,13 +120,13 @@ export async function loadFlowchartFile(fileName) {
   return response.json();
 }
 
-export async function saveFlowchartFile(fileName, data) {
+export async function saveFlowchartFile(fileName, sourceText, format = "mermaid") {
   const response = await fetch(
     `${FLOWCHART_API_BASE}/${encodeURIComponent(fileName)}`,
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ sourceText, format }),
     },
   );
 
@@ -150,13 +150,13 @@ export async function generateFlowchartFromPrompt(prompt, options = {}) {
   );
 }
 
-export async function explainFlowchartJson(flowchartJson, options = {}) {
+export async function explainFlowchartMermaid(flowchartMermaid, options = {}) {
   return fetchWithRetry(
     `${FLOWCHART_API_BASE}/explain`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ flowchartJson }),
+      body: JSON.stringify({ flowchartMermaid }),
     },
     options,
   );

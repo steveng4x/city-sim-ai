@@ -2,29 +2,31 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { DataEditor } from "@/features/tools/components/DataEditor";
 import { ExplainModal } from "@/features/tools/components/ExplainModal";
-import { FlowchartCanvas } from "@/features/tools/components/FlowchartCanvas";
+import { ReactFlowCanvas } from "@/features/tools/components/ReactFlowCanvas";
 import { GenerateModal } from "@/features/tools/components/GenerateModal";
 import { Toolbar } from "@/features/tools/components/Toolbar";
-import { useD3Graph } from "@/features/tools/hooks/useD3Graph";
 import { useFlowchartAi } from "@/features/tools/hooks/useFlowchartAi";
 import { useFlowchartEditor } from "@/features/tools/hooks/useFlowchartEditor";
 import { useFlowchartFiles } from "@/features/tools/hooks/useFlowchartFiles";
-import { sampleFlowchartData } from "@/features/tools/utils/flowchart";
+import {
+  FLOWCHART_LAYOUT_DIRECTIONS,
+  sampleFlowchartData,
+} from "@/features/tools/utils/flowchart";
 
 export default function FlowchartToolPage() {
   const navigate = useNavigate();
   const workspaceRef = React.useRef(null);
   const {
-    editorJson,
+    editorMermaid,
     renderedData,
     status,
     errorMessage,
     setErrorMessage,
     updateStatus,
     loadDataIntoEditor,
-    applyCurrentEditorJson,
+    applyCurrentEditorMermaid,
     handleEditorChange,
-    formatEditorJson,
+    formatEditorMermaid,
   } = useFlowchartEditor(sampleFlowchartData);
   const {
     files,
@@ -34,7 +36,7 @@ export default function FlowchartToolPage() {
     setFileName,
     refreshFileDirectory,
     applySelectedFile,
-    saveCurrentJson,
+    saveCurrentMermaid,
   } = useFlowchartFiles({
     onLoadData: loadDataIntoEditor,
     onStatusChange: updateStatus,
@@ -56,18 +58,22 @@ export default function FlowchartToolPage() {
     handleGenerateFlowchart,
     handleExplainFlowchart,
   } = useFlowchartAi({
-    editorJson,
+    editorMermaid,
     onApplyData: loadDataIntoEditor,
     onStatusChange: updateStatus,
     onErrorChange: setErrorMessage,
   });
-  const { containerRef, resetView } = useD3Graph(renderedData);
+  const canvasRef = React.useRef(null);
+  const resetView = React.useCallback(() => canvasRef.current?.resetView(), []);
   const renderedNodeCount = renderedData?.nodes?.length || 0;
   const renderedLinkCount = renderedData?.links?.length || 0;
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [isFullscreenChromeExpanded, setIsFullscreenChromeExpanded] =
     React.useState(false);
   const [isEditorVisible, setIsEditorVisible] = React.useState(true);
+  const [layoutDirection, setLayoutDirection] = React.useState(
+    FLOWCHART_LAYOUT_DIRECTIONS.horizontal,
+  );
 
   React.useEffect(() => {
     const handleFullscreenChange = () => {
@@ -118,6 +124,19 @@ export default function FlowchartToolPage() {
     setIsEditorVisible((currentValue) => !currentValue);
   }, []);
 
+  const handleLayoutDirectionChange = React.useCallback(
+    (nextDirection) => {
+      setLayoutDirection(nextDirection);
+      updateStatus(
+        nextDirection === FLOWCHART_LAYOUT_DIRECTIONS.vertical
+          ? "Vertical flow layout applied"
+          : "Horizontal flow layout applied",
+        "info",
+      );
+    },
+    [updateStatus],
+  );
+
   return (
     <div
       ref={workspaceRef}
@@ -137,25 +156,7 @@ export default function FlowchartToolPage() {
         textarea::-webkit-scrollbar-thumb:hover {
           background: #6b7280;
         }
-        .node {
-          cursor: grab;
-        }
-        .node:active {
-          cursor: grabbing;
-        }
-        .node-shape {
-          transition: filter 0.2s ease;
-        }
-        .node:hover .node-shape {
-          filter: brightness(0.95) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-        }
-        .link-path {
-          transition: stroke-width 0.2s ease;
-        }
-        .link-group:hover .link-path {
-          stroke-width: 3px;
-          stroke: #64748b;
-        }
+
       `}</style>
 
       <Toolbar
@@ -165,6 +166,7 @@ export default function FlowchartToolPage() {
         isFullscreen={isFullscreen}
         isFullscreenChromeExpanded={isFullscreenChromeExpanded}
         isEditorVisible={isEditorVisible}
+        layoutDirection={layoutDirection}
         files={files}
         selectedFile={selectedFile}
         onSelectedFileChange={handleSelectedFileChange}
@@ -172,11 +174,12 @@ export default function FlowchartToolPage() {
         onApplyFile={() => void applySelectedFile()}
         fileName={fileName}
         onFileNameChange={setFileName}
-        onSave={() => void saveCurrentJson(editorJson)}
+        onSave={() => void saveCurrentMermaid(editorMermaid)}
         onOpenGenerate={() => setIsGenerateOpen(true)}
         onExplain={() => void handleExplainFlowchart()}
         onResetView={resetView}
-        onApplyRender={applyCurrentEditorJson}
+        onApplyRender={applyCurrentEditorMermaid}
+        onLayoutDirectionChange={handleLayoutDirectionChange}
         onToggleEditorVisibility={handleToggleEditorVisibility}
         onToggleFullscreenChrome={handleToggleFullscreenChrome}
         onToggleFullscreen={() => void handleToggleFullscreen()}
@@ -191,18 +194,20 @@ export default function FlowchartToolPage() {
         >
           {!isFullscreen || isEditorVisible ? (
             <DataEditor
-              editorJson={editorJson}
+              editorMermaid={editorMermaid}
               errorMessage={errorMessage}
               onChange={handleEditorChange}
-              onFormatJson={formatEditorJson}
+              onFormatMermaid={formatEditorMermaid}
               isFullscreen={isFullscreen}
             />
           ) : null}
-          <FlowchartCanvas
-            containerRef={containerRef}
+          <ReactFlowCanvas
+            ref={canvasRef}
+            data={renderedData}
             nodeCount={renderedNodeCount}
             linkCount={renderedLinkCount}
             isFullscreen={isFullscreen}
+            orientation={layoutDirection}
           />
         </div>
       </main>

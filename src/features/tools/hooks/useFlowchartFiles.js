@@ -5,9 +5,23 @@ import {
   saveFlowchartFile,
 } from "@/features/tools/utils/flowchartApi";
 import {
-  normalizeFileName,
-  parseFlowchartJson,
+  normalizeMermaidFileName,
+  parseMermaidToFlowchartData,
 } from "@/features/tools/utils/flowchart";
+
+function getMermaidSaveTarget(fileName = "") {
+  const trimmed = String(fileName || "").trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.endsWith(".json")) {
+    return normalizeMermaidFileName(trimmed.slice(0, -5));
+  }
+
+  return normalizeMermaidFileName(trimmed);
+}
 
 export function useFlowchartFiles({
   onLoadData,
@@ -38,19 +52,19 @@ export function useFlowchartFiles({
 
         onStatusChange(
           availableFiles.length
-            ? `Found ${availableFiles.length} JSON file${availableFiles.length === 1 ? "" : "s"}`
-            : "JSON directory is empty",
+            ? `Found ${availableFiles.length} flowchart file${availableFiles.length === 1 ? "" : "s"}`
+            : "Flowchart directory is empty",
           availableFiles.length ? "info" : "warning",
         );
       } catch {
-        onStatusChange("JSON directory unavailable", "warning");
+        onStatusChange("Flowchart directory unavailable", "warning");
       }
     },
     [fileName, onStatusChange, selectedFile],
   );
 
   const applySelectedFile = React.useCallback(async () => {
-    const targetFile = selectedFile || normalizeFileName(fileName);
+    const targetFile = selectedFile || fileName.trim();
 
     if (!targetFile) {
       onStatusChange("Select a file to apply", "warning");
@@ -61,16 +75,16 @@ export function useFlowchartFiles({
       const { data } = await loadFlowchartFile(targetFile);
       onLoadData(data, `Applied ${targetFile}`);
       setSelectedFile(targetFile);
-      setFileName(targetFile);
+      setFileName(getMermaidSaveTarget(targetFile));
       onErrorChange("");
     } catch (error) {
       onStatusChange(error.message, "error");
     }
   }, [fileName, onErrorChange, onLoadData, onStatusChange, selectedFile]);
 
-  const saveCurrentJson = React.useCallback(
-    async (editorJson) => {
-      const targetFile = normalizeFileName(fileName || selectedFile);
+  const saveCurrentMermaid = React.useCallback(
+    async (editorMermaid) => {
+      const targetFile = getMermaidSaveTarget(fileName || selectedFile);
 
       if (!targetFile) {
         onStatusChange("Enter a file name before saving", "warning");
@@ -78,8 +92,8 @@ export function useFlowchartFiles({
       }
 
       try {
-        const parsedData = parseFlowchartJson(editorJson);
-        await saveFlowchartFile(targetFile, parsedData);
+        parseMermaidToFlowchartData(editorMermaid);
+        await saveFlowchartFile(targetFile, editorMermaid, "mermaid");
         setSelectedFile(targetFile);
         setFileName(targetFile);
         onErrorChange("");
@@ -88,7 +102,7 @@ export function useFlowchartFiles({
       } catch (error) {
         onStatusChange(
           error instanceof SyntaxError
-            ? "Fix invalid JSON before saving"
+            ? "Fix invalid Mermaid before saving"
             : error.message,
           "error",
         );
@@ -117,13 +131,13 @@ export function useFlowchartFiles({
         setFiles(availableFiles);
 
         if (availableFiles.length === 0) {
-          onStatusChange("JSON directory is empty", "warning");
+          onStatusChange("Flowchart directory is empty", "warning");
           return;
         }
 
         const firstFile = availableFiles[0];
         setSelectedFile(firstFile);
-        setFileName(firstFile);
+  setFileName(getMermaidSaveTarget(firstFile));
 
         const { data } = await loadFlowchartFile(firstFile);
 
@@ -138,7 +152,7 @@ export function useFlowchartFiles({
           return;
         }
 
-        onStatusChange("JSON directory unavailable", "warning");
+        onStatusChange("Flowchart directory unavailable", "warning");
       }
     };
 
@@ -157,6 +171,7 @@ export function useFlowchartFiles({
     setFileName,
     refreshFileDirectory,
     applySelectedFile,
-    saveCurrentJson,
+    saveCurrentMermaid,
+    saveCurrentJson: saveCurrentMermaid,
   };
 }

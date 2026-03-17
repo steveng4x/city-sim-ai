@@ -1,0 +1,49 @@
+flowchart LR
+    A([Open Dev Mode])
+    B[Inspect Design]
+    C[[Init Code Connect]]
+    D{Select Mapping Method}
+    E((Use UI Mapping))
+    F((Use CLI Mapping))
+    G{Connect GitHub?}
+    H{Storybook Integration?}
+    I[Map Components]
+    J{Preview Accurate?}
+    K[[Publish to MCP]]
+    L{Mappings Correct?}
+    M[Prompt Copilot]
+    N[AI Scaffolds Layout]
+    O{Reuse Components?}
+    P((Refine by Section))
+    Q([Finalize Implementation])
+    R[/Needs Org plan, published library, and AI IDE/]
+    S[/UI and CLI can coexist, but not on the same component/]
+    T[/CLI mappings are strings, not executed code/]
+    U[/Treat Figma as spec, not final code generator/]
+
+    A --> B
+    B --> C
+    C --> D
+    D -->|UI| E
+    D -->|CLI| F
+    E --> G
+    G -->|GitHub| I
+    G -->|Manual| I
+    F --> H
+    H -->|Yes| I
+    H -->|No| I
+    I --> J
+    J -->|Yes| K
+    J -->|Adjust Preview| I
+    K --> L
+    L -->|Yes| M
+    L -->|Fix Props| I
+    M --> N
+    N --> O
+    O -->|Yes| P
+    O -->|Refine Prompt| M
+    P --> Q
+    A -->|deps| R
+    D -->|note| S
+    F -->|note| T
+    P -->|note| U

@@ -1,16 +1,17 @@
 import React from "react";
 import {
-  parseFlowchartJson,
+  parseMermaidToFlowchartData,
   sampleFlowchartData,
+  serializeFlowchartToMermaid,
 } from "@/features/tools/utils/flowchart";
 
 export function useFlowchartEditor(initialData = sampleFlowchartData) {
-  const [editorJson, setEditorJson] = React.useState(
-    JSON.stringify(initialData, null, 4),
+  const [editorMermaid, setEditorMermaid] = React.useState(
+    serializeFlowchartToMermaid(initialData),
   );
   const [renderedData, setRenderedData] = React.useState(initialData);
   const [status, setStatus] = React.useState({
-    message: "Valid JSON",
+    message: "Valid Mermaid",
     type: "success",
   });
   const [errorMessage, setErrorMessage] = React.useState("");
@@ -20,7 +21,7 @@ export function useFlowchartEditor(initialData = sampleFlowchartData) {
   }, []);
 
   const loadDataIntoEditor = React.useCallback((data, message) => {
-    setEditorJson(JSON.stringify(data, null, 4));
+    setEditorMermaid(serializeFlowchartToMermaid(data));
     setRenderedData(data);
     setErrorMessage("");
     setStatus({
@@ -29,13 +30,13 @@ export function useFlowchartEditor(initialData = sampleFlowchartData) {
     });
   }, []);
 
-  const applyCurrentEditorJson = React.useCallback(() => {
+  const applyCurrentEditorMermaid = React.useCallback(() => {
     try {
-      const parsedData = parseFlowchartJson(editorJson);
+      const parsedData = parseMermaidToFlowchartData(editorMermaid).data;
       setRenderedData(parsedData);
       setErrorMessage("");
       setStatus({
-        message: "Applied JSON",
+        message: "Applied Mermaid",
         type: "success",
       });
       return parsedData;
@@ -47,13 +48,13 @@ export function useFlowchartEditor(initialData = sampleFlowchartData) {
       });
       return null;
     }
-  }, [editorJson]);
+  }, [editorMermaid]);
 
   const handleEditorChange = React.useCallback((nextValue) => {
-    setEditorJson(nextValue);
+    setEditorMermaid(nextValue);
 
     try {
-      JSON.parse(nextValue);
+      parseMermaidToFlowchartData(nextValue);
       setErrorMessage("");
       setStatus({
         message: "Unsaved changes",
@@ -61,40 +62,43 @@ export function useFlowchartEditor(initialData = sampleFlowchartData) {
       });
     } catch {
       setStatus({
-        message: "Invalid JSON",
+        message: "Invalid Mermaid",
         type: "error",
       });
     }
   }, []);
 
-  const formatEditorJson = React.useCallback(() => {
+  const formatEditorMermaid = React.useCallback(() => {
     try {
-      const parsedData = parseFlowchartJson(editorJson);
-      setEditorJson(JSON.stringify(parsedData, null, 4));
+      const parsedData = parseMermaidToFlowchartData(editorMermaid).data;
+      setEditorMermaid(serializeFlowchartToMermaid(parsedData));
       setErrorMessage("");
       setStatus({
-        message: "Formatted JSON",
+        message: "Formatted Mermaid",
         type: "info",
       });
     } catch (error) {
       setErrorMessage(`Error: ${error.message}`);
       setStatus({
-        message: "Invalid JSON",
+        message: "Invalid Mermaid",
         type: "error",
       });
     }
-  }, [editorJson]);
+  }, [editorMermaid]);
 
   return {
-    editorJson,
+    editorMermaid,
+    editorJson: editorMermaid,
     renderedData,
     status,
     errorMessage,
     setErrorMessage,
     updateStatus,
     loadDataIntoEditor,
-    applyCurrentEditorJson,
+    applyCurrentEditorMermaid,
+    applyCurrentEditorJson: applyCurrentEditorMermaid,
     handleEditorChange,
-    formatEditorJson,
+    formatEditorMermaid,
+    formatEditorJson: formatEditorMermaid,
   };
 }

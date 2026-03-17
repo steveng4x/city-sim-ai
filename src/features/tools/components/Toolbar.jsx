@@ -27,6 +27,7 @@ export function Toolbar({
   isFullscreen,
   isFullscreenChromeExpanded,
   isEditorVisible,
+  layoutDirection,
   files,
   selectedFile,
   onSelectedFileChange,
@@ -39,6 +40,7 @@ export function Toolbar({
   onExplain,
   onResetView,
   onApplyRender,
+  onLayoutDirectionChange,
   onToggleEditorVisibility,
   onToggleFullscreenChrome,
   onToggleFullscreen,
@@ -56,7 +58,7 @@ export function Toolbar({
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-white">
-                  JSON Flowchart Visualizer
+                  Mermaid Flowchart Visualizer
                 </p>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
                   <span
@@ -123,7 +125,7 @@ export function Toolbar({
                     }
                     className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
                   >
-                    <option value="">Choose JSON file</option>
+                    <option value="">Choose flowchart file</option>
                     {files.map((currentFile) => (
                       <option key={currentFile} value={currentFile}>
                         {currentFile}
@@ -157,7 +159,7 @@ export function Toolbar({
                   <input
                     value={fileName}
                     onChange={(event) => onFileNameChange(event.target.value)}
-                    placeholder="flowchart-name.json"
+                    placeholder="flowchart-name.mmd"
                     className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-amber-500"
                   />
                   <button
@@ -166,7 +168,7 @@ export function Toolbar({
                     className="inline-flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2.5 text-sm font-medium text-amber-300 transition hover:bg-amber-500/25"
                   >
                     <Save size={14} />
-                    Save JSON
+                    Save Mermaid
                   </button>
                 </div>
               </div>
@@ -175,6 +177,27 @@ export function Toolbar({
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Actions
                 </p>
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Reformat
+                  </span>
+                  <div className="inline-flex rounded-xl border border-slate-700 bg-slate-950 p-1">
+                    <button
+                      type="button"
+                      onClick={() => onLayoutDirectionChange("horizontal")}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "horizontal" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                    >
+                      Horizontal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onLayoutDirectionChange("vertical")}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "vertical" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                    >
+                      Vertical
+                    </button>
+                  </div>
+                </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -249,10 +272,10 @@ export function Toolbar({
 
               <div className="min-w-0">
                 <h1 className="truncate text-lg font-semibold text-white sm:text-xl">
-                  JSON Flowchart Visualizer
+                  Mermaid Flowchart Visualizer
                 </h1>
                 <p className="mt-1 max-w-2xl text-sm text-slate-400">
-                  Edit structured flowchart JSON, render it live, and use AI to
+                  Edit Mermaid flowcharts, render them live, and use AI to
                   generate or explain the process without leaving the workspace.
                 </p>
               </div>
@@ -290,7 +313,7 @@ export function Toolbar({
                 onChange={(event) => onSelectedFileChange(event.target.value)}
                 className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
               >
-                <option value="">Choose JSON file</option>
+                <option value="">Choose flowchart file</option>
                 {files.map((currentFile) => (
                   <option key={currentFile} value={currentFile}>
                     {currentFile}
@@ -324,7 +347,7 @@ export function Toolbar({
               <input
                 value={fileName}
                 onChange={(event) => onFileNameChange(event.target.value)}
-                placeholder="flowchart-name.json"
+                placeholder="flowchart-name.mmd"
                 className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-amber-500"
               />
               <button
@@ -333,7 +356,7 @@ export function Toolbar({
                 className="inline-flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2.5 text-sm font-medium text-amber-300 transition hover:bg-amber-500/25"
               >
                 <Save size={14} />
-                Save JSON
+                Save Mermaid
               </button>
             </div>
           </div>
@@ -342,6 +365,27 @@ export function Toolbar({
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
               Actions
             </p>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Reformat
+              </span>
+              <div className="inline-flex rounded-xl border border-slate-700 bg-slate-950 p-1">
+                <button
+                  type="button"
+                  onClick={() => onLayoutDirectionChange("horizontal")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "horizontal" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                >
+                  Horizontal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onLayoutDirectionChange("vertical")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "vertical" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                >
+                  Vertical
+                </button>
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
