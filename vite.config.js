@@ -12,10 +12,109 @@ import {
 
 const workspaceRoot = fileURLToPath(new URL(".", import.meta.url));
 
-const flowchartDirectory = path.resolve(
+const flowchartRootDirectory = path.resolve(
   workspaceRoot,
-  "src/features/tools/json",
+  "src/features/tools",
 );
+
+const defaultFlowchartFolder = "json";
+
+function isPathInsideDirectory(targetPath, rootPath) {
+  const relativePath = path.relative(rootPath, targetPath);
+
+  return (
+    relativePath === "" ||
+    (!relativePath.startsWith("..") && !path.isAbsolute(relativePath))
+  );
+}
+
+function normalizeFlowchartFolder(folderName = defaultFlowchartFolder) {
+  const trimmedFolder = String(folderName || defaultFlowchartFolder)
+    .trim()
+    .replace(/\\+/g, "/")
+    .replace(/^\/+|\/+$/g, "");
+
+  if (!trimmedFolder) {
+    return defaultFlowchartFolder;
+  }
+
+  const segments = trimmedFolder.split("/");
+
+  if (!segments.every((segment) => /^[A-Za-z0-9._-]+$/.test(segment))) {
+    return null;
+  }
+
+  return segments.join("/");
+}
+
+function resolveFlowchartDirectory(folderName = defaultFlowchartFolder) {
+  const normalizedFolder = normalizeFlowchartFolder(folderName);
+
+  if (!normalizedFolder) {
+    return null;
+  }
+
+  const resolvedDirectory = path.resolve(
+    flowchartRootDirectory,
+    normalizedFolder,
+  );
+
+  if (!isPathInsideDirectory(resolvedDirectory, flowchartRootDirectory)) {
+    return null;
+  }
+
+  return {
+    folder: normalizedFolder,
+    directory: resolvedDirectory,
+  };
+}
+
+async function collectFlowchartFolders(
+  currentDirectory,
+  currentRelativePath = "",
+  folders = new Set(),
+) {
+  const entries = await fs.readdir(currentDirectory, { withFileTypes: true });
+  let hasFlowchartFiles = false;
+
+  for (const entry of entries) {
+    if (
+      entry.isFile() &&
+      (entry.name.endsWith(".json") || entry.name.endsWith(".mmd"))
+    ) {
+      hasFlowchartFiles = true;
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      const nextRelativePath = currentRelativePath
+        ? `${currentRelativePath}/${entry.name}`
+        : entry.name;
+
+      await collectFlowchartFolders(
+        path.join(currentDirectory, entry.name),
+        nextRelativePath,
+        folders,
+      );
+    }
+  }
+
+  if (hasFlowchartFiles && currentRelativePath) {
+    folders.add(currentRelativePath);
+  }
+
+  return folders;
+}
+
+async function listAvailableFlowchartFolders() {
+  await fs.mkdir(flowchartRootDirectory, { recursive: true });
+
+  const folders = await collectFlowchartFolders(flowchartRootDirectory);
+
+  folders.add(defaultFlowchartFolder);
+
+  return Array.from(folders).sort((left, right) => left.localeCompare(right));
+}
 
 function normalizeFlowchartFileName(fileName = "") {
   const trimmed = String(fileName).trim();
@@ -69,7 +168,9 @@ function getGeminiResponseText(result) {
 }
 
 function normalizeFlowchartSource(sourceText = "", format = "mermaid") {
-  const nextFormat = String(format || "mermaid").trim().toLowerCase();
+  const nextFormat = String(format || "mermaid")
+    .trim()
+    .toLowerCase();
 
   if (nextFormat === "json") {
     const parsedData = parseFlowchartJson(sourceText);
@@ -84,6 +185,7 @@ function normalizeFlowchartSource(sourceText = "", format = "mermaid") {
   return {
     format: "mermaid",
     sourceText: `${String(sourceText || "").trim()}\n`,
+    direction: parsedMermaid.direction,
     data: parsedMermaid.data,
   };
 }
@@ -109,6 +211,10 @@ async function callGeminiApi({ apiKey, model, body }) {
 function flowchartFileApiPlugin({ geminiApiKey, geminiModel }) {
   const handleRequest = async (request, response) => {
     const url = new URL(request.url || "/", "http://localhost");
+    const requestedFolder =
+      url.searchParams.get("folder") || defaultFlowchartFolder;
+    const resolvedFlowchartDirectory =
+      resolveFlowchartDirectory(requestedFolder);
 
     if (
       !url.pathname.startsWith("/api/flowcharts") &&
@@ -118,6 +224,17 @@ function flowchartFileApiPlugin({ geminiApiKey, geminiModel }) {
     }
 
     try {
+      if (
+        url.pathname.startsWith("/api/flowcharts") &&
+        !resolvedFlowchartDirectory
+      ) {
+        createJsonResponse(response, 400, {
+          error:
+            "Invalid source folder. Use a relative folder inside src/features/tools.",
+        });
+        return true;
+      }
+
       if (
         [
           "/api/flowcharts/generate",
@@ -162,10 +279,11 @@ function flowchartFileApiPlugin({ geminiApiKey, geminiModel }) {
         });
 
         const sourceText = getGeminiResponseText(result);
-        const { data } = parseMermaidToFlowchartData(sourceText);
+        const parsedMermaid = parseMermaidToFlowchartData(sourceText);
 
         createJsonResponse(response, 200, {
-          data,
+          data: parsedMermaid.data,
+          direction: parsedMermaid.direction,
           sourceText,
           format: "mermaid",
         });
@@ -238,6 +356,10 @@ Respond strictly in JSON: { "name": "string", "foundingMyth": "string", "culture
         return true;
       }
 
+      const { folder: activeFolder, directory: flowchartDirectory } =
+        resolvedFlowchartDirectory;
+      const availableFolders = await listAvailableFlowchartFolders();
+
       await fs.mkdir(flowchartDirectory, { recursive: true });
 
       if (url.pathname === "/api/flowcharts" && request.method === "GET") {
@@ -253,7 +375,13 @@ Respond strictly in JSON: { "name": "string", "foundingMyth": "string", "culture
           .map((entry) => entry.name)
           .sort((left, right) => left.localeCompare(right));
 
-        createJsonResponse(response, 200, { files: flowchartFiles });
+        createJsonResponse(response, 200, {
+          folder: activeFolder,
+          folders: Array.from(
+            new Set([...availableFolders, activeFolder]),
+          ).sort((left, right) => left.localeCompare(right)),
+          files: flowchartFiles,
+        });
         return true;
       }
 
@@ -279,6 +407,9 @@ Respond strictly in JSON: { "name": "string", "foundingMyth": "string", "culture
         createJsonResponse(response, 200, {
           fileName,
           data: parsedSource.data,
+          ...(parsedSource.direction
+            ? { direction: parsedSource.direction }
+            : {}),
           format: parsedSource.format,
           sourceText: fileContents,
         });

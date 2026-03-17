@@ -1,4 +1,6 @@
 flowchart LR
+
+    %% Node declarations
     A([Open Dev Mode])
     B[Inspect Design]
     C[[Init Code Connect]]
@@ -21,29 +23,34 @@ flowchart LR
     T[/CLI mappings are strings, not executed code/]
     U[/Treat Figma as spec, not final code generator/]
 
+    %% Main flow
     A --> B
     B --> C
     C --> D
     D -->|UI| E
-    D -->|CLI| F
     E --> G
     G -->|GitHub| I
-    G -->|Manual| I
-    F --> H
-    H -->|Yes| I
-    H -->|No| I
     I --> J
     J -->|Yes| K
-    J -->|Adjust Preview| I
     K --> L
     L -->|Yes| M
-    L -->|Fix Props| I
     M --> N
     N --> O
     O -->|Yes| P
-    O -->|Refine Prompt| M
     P --> Q
-    A -->|deps| R
+
+    %% Branch edges
+    D -->|CLI| F
+    F --> H
+    G -->|Manual| I
+    H -->|Yes| I
+    H -->|No| I
+    J -->|Adjust Preview| I
+    L -->|Fix Props| I
+    O -->|Refine Prompt| M
+
+    %% Note edges
+    A -->|note| R
     D -->|note| S
     F -->|note| T
     P -->|note| U

@@ -3,6 +3,19 @@ const DEFAULT_RETRIES = 3;
 const DEFAULT_MAX_DELAY = 4000;
 const DEFAULT_TIMEOUT_MS = 15000;
 
+function createFlowchartUrl(pathname = "", folder = "") {
+  const url = new URL(
+    `${FLOWCHART_API_BASE}${pathname}`,
+    window.location.origin,
+  );
+
+  if (String(folder || "").trim()) {
+    url.searchParams.set("folder", folder);
+  }
+
+  return `${url.pathname}${url.search}`;
+}
+
 function createAbortError(message) {
   return new DOMException(message, "AbortError");
 }
@@ -96,8 +109,8 @@ export async function fetchWithRetry(
   throw new Error("Request failed.");
 }
 
-export async function listFlowchartFiles() {
-  const response = await fetch(FLOWCHART_API_BASE);
+export async function listFlowchartFiles(folder = "") {
+  const response = await fetch(createFlowchartUrl("", folder));
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
@@ -107,9 +120,9 @@ export async function listFlowchartFiles() {
   return response.json();
 }
 
-export async function loadFlowchartFile(fileName) {
+export async function loadFlowchartFile(fileName, folder = "") {
   const response = await fetch(
-    `${FLOWCHART_API_BASE}/${encodeURIComponent(fileName)}`,
+    createFlowchartUrl(`/${encodeURIComponent(fileName)}`, folder),
   );
 
   if (!response.ok) {
@@ -120,9 +133,14 @@ export async function loadFlowchartFile(fileName) {
   return response.json();
 }
 
-export async function saveFlowchartFile(fileName, sourceText, format = "mermaid") {
+export async function saveFlowchartFile(
+  fileName,
+  sourceText,
+  format = "mermaid",
+  folder = "",
+) {
   const response = await fetch(
-    `${FLOWCHART_API_BASE}/${encodeURIComponent(fileName)}`,
+    createFlowchartUrl(`/${encodeURIComponent(fileName)}`, folder),
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

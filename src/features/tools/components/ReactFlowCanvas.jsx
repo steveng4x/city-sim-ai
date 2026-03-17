@@ -13,7 +13,23 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { BackEdge } from "@/features/tools/components/reactflow/FlowchartReactEdge";
+import { FLOWCHART_NODE_DIMENSIONS } from "@/features/tools/utils/flowchart";
 import { toReactFlowElements } from "@/features/tools/utils/reactFlowAdapter";
+
+const DECISION_NODE_DIMENSIONS = FLOWCHART_NODE_DIMENSIONS.decision;
+const TERMINATOR_NODE_DIMENSIONS = FLOWCHART_NODE_DIMENSIONS.terminator;
+const PROCESS_NODE_DIMENSIONS = FLOWCHART_NODE_DIMENSIONS.process;
+const NOTE_NODE_DIMENSIONS = FLOWCHART_NODE_DIMENSIONS.note;
+const SUBFLOW_NODE_DIMENSIONS = FLOWCHART_NODE_DIMENSIONS.subflow;
+const GROUP_NODE_DIMENSIONS = FLOWCHART_NODE_DIMENSIONS.group;
+
+const DECISION_NODE_POLYGON_POINTS = `${
+  DECISION_NODE_DIMENSIONS.width / 2
+},4 ${DECISION_NODE_DIMENSIONS.width - 4},${
+  DECISION_NODE_DIMENSIONS.height / 2
+} ${DECISION_NODE_DIMENSIONS.width / 2},${
+  DECISION_NODE_DIMENSIONS.height - 4
+} 4,${DECISION_NODE_DIMENSIONS.height / 2}`;
 
 function getHandlePositions(orientation) {
   if (orientation === "vertical") {
@@ -35,16 +51,19 @@ const DecisionNode = React.memo(function DecisionNode({ data }) {
   return (
     <div
       className="group relative flex items-center justify-center"
-      style={{ width: 174, height: 100 }}
+      style={{
+        width: DECISION_NODE_DIMENSIONS.width,
+        height: DECISION_NODE_DIMENSIONS.height,
+      }}
     >
       <svg
-        width="174"
-        height="100"
-        viewBox="0 0 174 100"
+        width={DECISION_NODE_DIMENSIONS.width}
+        height={DECISION_NODE_DIMENSIONS.height}
+        viewBox={`0 0 ${DECISION_NODE_DIMENSIONS.width} ${DECISION_NODE_DIMENSIONS.height}`}
         className="absolute inset-0 pointer-events-none"
       >
         <polygon
-          points="87,4 170,50 87,96 4,50"
+          points={DECISION_NODE_POLYGON_POINTS}
           fill="#fef08a"
           stroke="#eab308"
           strokeWidth="2"
@@ -76,8 +95,8 @@ const TerminatorNode = React.memo(function TerminatorNode({ data }) {
     <div
       className="group flex items-center justify-center rounded-full border-2 border-purple-500 bg-purple-50 transition-[filter] duration-200 hover:brightness-95"
       style={{
-        width: 130,
-        height: 50,
+        width: TERMINATOR_NODE_DIMENSIONS.width,
+        height: TERMINATOR_NODE_DIMENSIONS.height,
         filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.06))",
       }}
     >
@@ -105,8 +124,8 @@ const ProcessNode = React.memo(function ProcessNode({ data }) {
     <div
       className="group flex items-center justify-center rounded-md border-2 border-sky-400 bg-sky-50 transition-[filter] duration-200 hover:brightness-95"
       style={{
-        width: 130,
-        height: 50,
+        width: PROCESS_NODE_DIMENSIONS.width,
+        height: PROCESS_NODE_DIMENSIONS.height,
         filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.06))",
       }}
     >
@@ -132,8 +151,8 @@ const NoteNode = React.memo(function NoteNode({ data }) {
     <div
       className="group flex items-start justify-start rounded-sm border border-amber-400 bg-amber-50 transition-[filter] duration-200 hover:brightness-95"
       style={{
-        width: 160,
-        minHeight: 60,
+        width: NOTE_NODE_DIMENSIONS.width,
+        minHeight: NOTE_NODE_DIMENSIONS.height,
         filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.08))",
         borderLeft: "4px solid #f59e0b",
       }}
@@ -152,8 +171,8 @@ const SubflowNode = React.memo(function SubflowNode({ data }) {
     <div
       className="group flex items-center justify-center rounded-lg border-2 border-dashed border-indigo-400 bg-indigo-50/60 transition-[filter] duration-200 hover:brightness-95"
       style={{
-        width: 150,
-        height: 60,
+        width: SUBFLOW_NODE_DIMENSIONS.width,
+        height: SUBFLOW_NODE_DIMENSIONS.height,
         filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.07))",
       }}
     >
@@ -186,8 +205,8 @@ const GroupNode = React.memo(function GroupNode({ data }) {
     <div
       className="group flex items-center justify-center rounded-xl border-2 border-slate-400 bg-slate-100/50 transition-[filter] duration-200 hover:brightness-95"
       style={{
-        width: 170,
-        height: 70,
+        width: GROUP_NODE_DIMENSIONS.width,
+        height: GROUP_NODE_DIMENSIONS.height,
         filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.06))",
       }}
     >
@@ -244,7 +263,7 @@ function nodeColor(node) {
 }
 
 function ReactFlowContent(
-  { data, nodeCount, linkCount, isFullscreen, orientation },
+  { data, nodeCount, linkCount, isFullscreen, orientation, formattingLogic },
   ref,
 ) {
   const { fitView } = useReactFlow();
@@ -262,6 +281,7 @@ function ReactFlowContent(
   React.useEffect(() => {
     const { nodes: rfNodes, edges: rfEdges } = toReactFlowElements(data, {
       direction: orientation,
+      formattingLogic,
     });
     setNodes(rfNodes);
     setEdges(rfEdges);
@@ -269,7 +289,7 @@ function ReactFlowContent(
     requestAnimationFrame(() => {
       fitView({ padding: 0.15, duration: 400 });
     });
-  }, [data, fitView, orientation, setEdges, setNodes]);
+  }, [data, fitView, formattingLogic, orientation, setEdges, setNodes]);
 
   const onNodeDoubleClick = React.useCallback(
     (_event, node) => {
@@ -288,6 +308,7 @@ function ReactFlowContent(
 
   return (
     <section
+      data-testid="flowchart-canvas"
       className={`relative overflow-hidden rounded-[28px] border border-slate-800 bg-white shadow-[0_24px_80px_rgba(2,6,23,0.38)] ${isFullscreen ? "h-full min-h-0" : "min-h-[560px]"}`}
     >
       {isFullscreen ? (
@@ -392,6 +413,7 @@ export const ReactFlowCanvas = React.forwardRef(function ReactFlowCanvas(
     linkCount,
     isFullscreen = false,
     orientation = "horizontal",
+    formattingLogic = "current",
   },
   ref,
 ) {
@@ -404,6 +426,7 @@ export const ReactFlowCanvas = React.forwardRef(function ReactFlowCanvas(
         linkCount={linkCount}
         isFullscreen={isFullscreen}
         orientation={orientation}
+        formattingLogic={formattingLogic}
       />
     </ReactFlowProvider>
   );

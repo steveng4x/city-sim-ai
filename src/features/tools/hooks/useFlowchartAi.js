@@ -40,7 +40,11 @@ export function useFlowchartAi({
         signal: controller.signal,
       });
 
-      onApplyData(result.data, "Generated and applied flowchart");
+      onApplyData(result.data, "Generated and applied flowchart", {
+        sourceText: result.sourceText,
+        sourceFormat: "mermaid",
+        direction: result.direction,
+      });
       onErrorChange("");
       setGeneratePrompt("");
       setIsGenerateOpen(false);

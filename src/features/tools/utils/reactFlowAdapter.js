@@ -1,17 +1,7 @@
-import { computeFlowchartLayout } from "@/features/tools/utils/flowchart";
-
-const NODE_DIMENSIONS = {
-  decision: { width: 174, height: 100 },
-  terminator: { width: 130, height: 50 },
-  process: { width: 130, height: 50 },
-  note: { width: 160, height: 60 },
-  subflow: { width: 150, height: 60 },
-  group: { width: 170, height: 70 },
-};
-
-function getNodeDimensions(type) {
-  return NODE_DIMENSIONS[type] || NODE_DIMENSIONS.process;
-}
+import {
+  computeFlowchartLayout,
+  getFlowchartNodeDimensions,
+} from "@/features/tools/utils/flowchart";
 
 export function toReactFlowElements(data, options = {}) {
   if (
@@ -27,12 +17,15 @@ export function toReactFlowElements(data, options = {}) {
   const { nodes: layoutNodes, direction } = computeFlowchartLayout(
     data.nodes,
     links,
-    options,
+    {
+      direction: options.direction,
+      formattingLogic: options.formattingLogic,
+    },
   );
   const nodeMap = new Map(layoutNodes.map((n) => [n.id, n]));
 
   const nodes = layoutNodes.map((node) => {
-    const { width, height } = getNodeDimensions(node.type);
+    const { width, height } = getFlowchartNodeDimensions(node.type);
 
     return {
       id: node.id,
@@ -61,7 +54,7 @@ export function toReactFlowElements(data, options = {}) {
   });
 
   const edges = links
-    .map((link) => {
+    .map((link, index) => {
       const sourceId =
         typeof link.source === "object" ? link.source.id : link.source;
       const targetId =
@@ -76,7 +69,7 @@ export function toReactFlowElements(data, options = {}) {
       const isBackEdge = targetNode.depth <= sourceNode.depth;
 
       return {
-        id: `${sourceId}-${targetId}`,
+        id: link.id || `edge-${sourceId}-${targetId}-${index}`,
         source: sourceId,
         target: targetId,
         label: link.label || "",

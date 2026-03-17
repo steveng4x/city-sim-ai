@@ -1,13 +1,19 @@
 import React from "react";
 import {
+  FLOWCHART_MERMAID_DEFAULT_DIRECTION,
   parseMermaidToFlowchartData,
   sampleFlowchartData,
   serializeFlowchartToMermaid,
 } from "@/features/tools/utils/flowchart";
 
 export function useFlowchartEditor(initialData = sampleFlowchartData) {
+  const [mermaidDirection, setMermaidDirection] = React.useState(
+    FLOWCHART_MERMAID_DEFAULT_DIRECTION,
+  );
   const [editorMermaid, setEditorMermaid] = React.useState(
-    serializeFlowchartToMermaid(initialData),
+    serializeFlowchartToMermaid(initialData, {
+      direction: FLOWCHART_MERMAID_DEFAULT_DIRECTION,
+    }),
   );
   const [renderedData, setRenderedData] = React.useState(initialData);
   const [status, setStatus] = React.useState({
@@ -20,26 +26,41 @@ export function useFlowchartEditor(initialData = sampleFlowchartData) {
     setStatus({ message, type });
   }, []);
 
-  const loadDataIntoEditor = React.useCallback((data, message) => {
-    setEditorMermaid(serializeFlowchartToMermaid(data));
-    setRenderedData(data);
-    setErrorMessage("");
-    setStatus({
-      message,
-      type: "success",
-    });
-  }, []);
+  const loadDataIntoEditor = React.useCallback(
+    (data, message, options = {}) => {
+      const nextDirection =
+        options.direction || FLOWCHART_MERMAID_DEFAULT_DIRECTION;
+      const canUseSourceText =
+        options.sourceFormat === "mermaid" &&
+        typeof options.sourceText === "string" &&
+        options.sourceText.trim().length > 0;
+
+      setMermaidDirection(nextDirection);
+      setEditorMermaid(
+        (canUseSourceText ? options.sourceText : null) ||
+          serializeFlowchartToMermaid(data, { direction: nextDirection }),
+      );
+      setRenderedData(data);
+      setErrorMessage("");
+      setStatus({
+        message,
+        type: "success",
+      });
+    },
+    [],
+  );
 
   const applyCurrentEditorMermaid = React.useCallback(() => {
     try {
-      const parsedData = parseMermaidToFlowchartData(editorMermaid).data;
-      setRenderedData(parsedData);
+      const parsedMermaid = parseMermaidToFlowchartData(editorMermaid);
+      setRenderedData(parsedMermaid.data);
+      setMermaidDirection(parsedMermaid.direction);
       setErrorMessage("");
       setStatus({
         message: "Applied Mermaid",
         type: "success",
       });
-      return parsedData;
+      return parsedMermaid.data;
     } catch (error) {
       setErrorMessage(`Error: ${error.message}`);
       setStatus({
@@ -54,13 +75,15 @@ export function useFlowchartEditor(initialData = sampleFlowchartData) {
     setEditorMermaid(nextValue);
 
     try {
-      parseMermaidToFlowchartData(nextValue);
+      const parsedMermaid = parseMermaidToFlowchartData(nextValue);
+      setMermaidDirection(parsedMermaid.direction);
       setErrorMessage("");
       setStatus({
         message: "Unsaved changes",
         type: "warning",
       });
-    } catch {
+    } catch (error) {
+      setErrorMessage(`Error: ${error.message}`);
       setStatus({
         message: "Invalid Mermaid",
         type: "error",
@@ -70,8 +93,13 @@ export function useFlowchartEditor(initialData = sampleFlowchartData) {
 
   const formatEditorMermaid = React.useCallback(() => {
     try {
-      const parsedData = parseMermaidToFlowchartData(editorMermaid).data;
-      setEditorMermaid(serializeFlowchartToMermaid(parsedData));
+      const parsedMermaid = parseMermaidToFlowchartData(editorMermaid);
+      setMermaidDirection(parsedMermaid.direction);
+      setEditorMermaid(
+        serializeFlowchartToMermaid(parsedMermaid.data, {
+          direction: parsedMermaid.direction,
+        }),
+      );
       setErrorMessage("");
       setStatus({
         message: "Formatted Mermaid",
@@ -88,6 +116,7 @@ export function useFlowchartEditor(initialData = sampleFlowchartData) {
 
   return {
     editorMermaid,
+    mermaidDirection,
     editorJson: editorMermaid,
     renderedData,
     status,
