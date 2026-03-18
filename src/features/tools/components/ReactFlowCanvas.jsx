@@ -11,6 +11,15 @@ import {
   useEdgesState,
   useReactFlow,
 } from "@xyflow/react";
+import {
+  forceCenter,
+  forceCollide,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+  forceX,
+  forceY,
+} from "d3-force";
 import "@xyflow/react/dist/style.css";
 import { BackEdge } from "@/features/tools/components/reactflow/FlowchartReactEdge";
 import { FLOWCHART_NODE_DIMENSIONS } from "@/features/tools/utils/flowchart";
@@ -245,6 +254,30 @@ const edgeTypes = {
   backEdge: BackEdge,
 };
 
+const FORCE_LINK_DISTANCE = 185;
+const FORCE_CHARGE_STRENGTH = -760;
+const FORCE_COLLIDE_PADDING = 26;
+const FORCE_AXIS_STRENGTH = 0.05;
+const FORCE_COLLIDE_STRENGTH = 0.9;
+const FORCE_LINK_STRENGTH = 0.14;
+
+function resolveNodeSize(node) {
+  const width =
+    Number(node.width) > 0
+      ? node.width
+      : Number(node.style?.width) > 0
+        ? Number(node.style.width)
+        : FLOWCHART_NODE_DIMENSIONS.process.width;
+  const height =
+    Number(node.height) > 0
+      ? node.height
+      : Number(node.style?.height) > 0
+        ? Number(node.style.height)
+        : FLOWCHART_NODE_DIMENSIONS.process.height;
+
+  return { width, height };
+}
+
 function nodeColor(node) {
   switch (node.type) {
     case "decision":
@@ -263,12 +296,129 @@ function nodeColor(node) {
 }
 
 function ReactFlowContent(
-  { data, nodeCount, linkCount, isFullscreen, orientation, formattingLogic },
+  {
+    data,
+    nodeCount,
+    linkCount,
+    isFullscreen,
+    orientation,
+    formattingLogic,
+    isForceLayoutEnabled,
+  },
   ref,
 ) {
   const { fitView } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const simulationRef = React.useRef(null);
+  const simulationNodesRef = React.useRef(new Map());
+  const nodesRef = React.useRef([]);
+  const edgesRef = React.useRef([]);
+  const isForceLayoutEnabledRef = React.useRef(isForceLayoutEnabled);
+
+  const stopForceSimulation = React.useCallback(() => {
+    simulationRef.current?.on("tick", null);
+    simulationRef.current?.stop();
+    simulationRef.current = null;
+    simulationNodesRef.current = new Map();
+  }, []);
+
+  const runForceSimulation = React.useCallback(
+    (initialNodes, initialEdges) => {
+      stopForceSimulation();
+
+      if (!Array.isArray(initialNodes) || initialNodes.length === 0) {
+        return;
+      }
+
+      const simulationNodes = initialNodes.map((node) => {
+        const { width, height } = resolveNodeSize(node);
+
+        return {
+          id: node.id,
+          width,
+          height,
+          x: node.position.x + width / 2,
+          y: node.position.y + height / 2,
+        };
+      });
+      const simulationNodesById = new Map(
+        simulationNodes.map((simulationNode) => [simulationNode.id, simulationNode]),
+      );
+      simulationNodesRef.current = simulationNodesById;
+
+      const linkForce = forceLink(
+        (initialEdges || [])
+          .map((edge) => ({
+            source: edge.source,
+            target: edge.target,
+          }))
+          .filter(
+            (edge) =>
+              simulationNodesById.has(edge.source) &&
+              simulationNodesById.has(edge.target),
+          ),
+      )
+        .id((node) => node.id)
+        .distance(FORCE_LINK_DISTANCE)
+        .strength(FORCE_LINK_STRENGTH);
+
+      const centerX =
+        simulationNodes.reduce((total, node) => total + node.x, 0) /
+        simulationNodes.length;
+      const centerY =
+        simulationNodes.reduce((total, node) => total + node.y, 0) /
+        simulationNodes.length;
+
+      const axisForce =
+        orientation === "vertical"
+          ? forceX(centerX).strength(FORCE_AXIS_STRENGTH)
+          : forceY(centerY).strength(FORCE_AXIS_STRENGTH);
+
+      const simulation = forceSimulation(simulationNodes)
+        .force("charge", forceManyBody().strength(FORCE_CHARGE_STRENGTH))
+        .force("link", linkForce)
+        .force(
+          "collision",
+          forceCollide()
+            .radius(
+              (node) =>
+                Math.max(node.width, node.height) / 2 + FORCE_COLLIDE_PADDING,
+            )
+            .strength(FORCE_COLLIDE_STRENGTH),
+        )
+        .force("center", forceCenter(centerX, centerY))
+        .force("axis", axisForce)
+        .alpha(1)
+        .alphaDecay(0.03)
+        .alphaMin(0.015);
+
+      simulation.on("tick", () => {
+        setNodes((currentNodes) =>
+          currentNodes.map((node) => {
+            const simulationNode = simulationNodesById.get(node.id);
+
+            if (!simulationNode) {
+              return node;
+            }
+
+            const { width, height } = resolveNodeSize(node);
+
+            return {
+              ...node,
+              position: {
+                x: simulationNode.x - width / 2,
+                y: simulationNode.y - height / 2,
+              },
+            };
+          }),
+        );
+      });
+
+      simulationRef.current = simulation;
+    },
+    [orientation, setNodes, stopForceSimulation],
+  );
 
   React.useImperativeHandle(
     ref,
@@ -279,17 +429,114 @@ function ReactFlowContent(
   );
 
   React.useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  React.useEffect(() => {
+    edgesRef.current = edges;
+  }, [edges]);
+
+  React.useEffect(() => {
+    isForceLayoutEnabledRef.current = isForceLayoutEnabled;
+  }, [isForceLayoutEnabled]);
+
+  React.useEffect(() => {
     const { nodes: rfNodes, edges: rfEdges } = toReactFlowElements(data, {
       direction: orientation,
       formattingLogic,
     });
+    nodesRef.current = rfNodes;
+    edgesRef.current = rfEdges;
     setNodes(rfNodes);
     setEdges(rfEdges);
+
+    if (isForceLayoutEnabledRef.current) {
+      runForceSimulation(rfNodes, rfEdges);
+    } else {
+      stopForceSimulation();
+    }
 
     requestAnimationFrame(() => {
       fitView({ padding: 0.15, duration: 400 });
     });
-  }, [data, fitView, formattingLogic, orientation, setEdges, setNodes]);
+  }, [
+    data,
+    fitView,
+    formattingLogic,
+    orientation,
+    runForceSimulation,
+    setEdges,
+    setNodes,
+    stopForceSimulation,
+  ]);
+
+  React.useEffect(() => {
+    if (isForceLayoutEnabled) {
+      runForceSimulation(nodesRef.current, edgesRef.current);
+      return;
+    }
+
+    stopForceSimulation();
+  }, [isForceLayoutEnabled, runForceSimulation, stopForceSimulation]);
+
+  React.useEffect(() => () => stopForceSimulation(), [stopForceSimulation]);
+
+  const onNodeDragStart = React.useCallback(
+    (_event, node) => {
+      if (!isForceLayoutEnabled) {
+        return;
+      }
+
+      const simulationNode = simulationNodesRef.current.get(node.id);
+      if (!simulationNode) {
+        return;
+      }
+
+      const { width, height } = resolveNodeSize(node);
+      simulationNode.fx = node.position.x + width / 2;
+      simulationNode.fy = node.position.y + height / 2;
+    },
+    [isForceLayoutEnabled],
+  );
+
+  const onNodeDrag = React.useCallback(
+    (_event, node) => {
+      if (!isForceLayoutEnabled) {
+        return;
+      }
+
+      const simulationNode = simulationNodesRef.current.get(node.id);
+      if (!simulationNode) {
+        return;
+      }
+
+      const { width, height } = resolveNodeSize(node);
+      simulationNode.fx = node.position.x + width / 2;
+      simulationNode.fy = node.position.y + height / 2;
+    },
+    [isForceLayoutEnabled],
+  );
+
+  const onNodeDragStop = React.useCallback(
+    (_event, node) => {
+      if (!isForceLayoutEnabled) {
+        return;
+      }
+
+      const simulationNode = simulationNodesRef.current.get(node.id);
+      if (!simulationNode) {
+        return;
+      }
+
+      const { width, height } = resolveNodeSize(node);
+      simulationNode.x = node.position.x + width / 2;
+      simulationNode.y = node.position.y + height / 2;
+      simulationNode.fx = null;
+      simulationNode.fy = null;
+      simulationRef.current?.alpha(0.35).restart();
+    },
+    [isForceLayoutEnabled],
+  );
 
   const onNodeDoubleClick = React.useCallback(
     (_event, node) => {
@@ -301,9 +548,20 @@ function ReactFlowContent(
               : n,
           ),
         );
+
+        if (isForceLayoutEnabled) {
+          const simulationNode = simulationNodesRef.current.get(node.id);
+
+          if (simulationNode) {
+            const { width, height } = resolveNodeSize(node);
+            simulationNode.x = node.data.baseX + width / 2;
+            simulationNode.y = node.data.baseY + height / 2;
+            simulationRef.current?.alpha(0.3).restart();
+          }
+        }
       }
     },
-    [setNodes],
+    [isForceLayoutEnabled, setNodes],
   );
 
   return (
@@ -331,6 +589,11 @@ function ReactFlowContent(
           Powered by <strong>React Flow</strong> — interactive graph
           visualization.
         </p>
+        {isForceLayoutEnabled ? (
+          <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-600">
+            Force simulation active
+          </p>
+        ) : null}
         <div className="mt-2 flex items-baseline gap-4">
           <p>
             <span className="text-lg font-semibold text-slate-900">
@@ -373,6 +636,9 @@ function ReactFlowContent(
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeDoubleClick={onNodeDoubleClick}
+          onNodeDragStart={onNodeDragStart}
+          onNodeDrag={onNodeDrag}
+          onNodeDragStop={onNodeDragStop}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
@@ -414,6 +680,7 @@ export const ReactFlowCanvas = React.forwardRef(function ReactFlowCanvas(
     isFullscreen = false,
     orientation = "horizontal",
     formattingLogic = "current",
+    isForceLayoutEnabled = false,
   },
   ref,
 ) {
@@ -427,6 +694,7 @@ export const ReactFlowCanvas = React.forwardRef(function ReactFlowCanvas(
         isFullscreen={isFullscreen}
         orientation={orientation}
         formattingLogic={formattingLogic}
+        isForceLayoutEnabled={isForceLayoutEnabled}
       />
     </ReactFlowProvider>
   );

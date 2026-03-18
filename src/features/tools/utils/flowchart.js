@@ -1,4 +1,5 @@
 import { hierarchy, tree } from "d3-hierarchy";
+import { computeFlowchartLayoutWithDagre } from "./flowchart-dagre";
 
 export const sampleFlowchartData = {
   nodes: [
@@ -1477,7 +1478,7 @@ export function computeFlowchartLayout(nodes, links, options = {}) {
     return computeFlowchartLayoutWithD3Hierarchy(nodes, links, options);
   }
 
-  return computeFlowchartLayoutWithCurrentEngine(nodes, links, options);
+  return computeFlowchartLayoutWithDagre(nodes, links, options);
 }
 
 export function computeFlowchartDepths(nodes, links) {

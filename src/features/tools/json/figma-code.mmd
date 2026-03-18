@@ -1,0 +1,65 @@
+flowchart LR
+    TRIGGER([Trigger])
+    TRIGGER_NOTE[/Schedule, push, Figma webhook, or manual/]
+    AUDIT[Sync audit]
+    AUDIT_NOTE[/Diff Figma components vs codebase components/]
+    CLASSIFY{Classify delta}
+    N_FIGMA[New in Figma only]
+    N_CODE[New in code only]
+    DRIFT[Changed on both sides]
+    INSYNC[Already in sync]
+    CHANGED_FIGMA[Figma updated]
+    CHANGED_CODE[Code updated]
+    RESOLVE{Resolve conflict}
+    RESOLVE_NOTE[/Human decides source of truth/]
+    SCAFFOLD[[Scaffold component from Figma]]
+    SCAFFOLD_NOTE[/Claude API + Figma REST + design tokens/]
+    GEN_MAP[[Generate Code Connect mapping]]
+    GEN_MAP_NOTE[/Claude API + ts-morph AST + Figma spec/]
+    UPDATE_COMP[[Update component from Figma diff]]
+    UPDATE_MAP[[Update existing mapping file]]
+    TS_CHECK{TypeScript valid?}
+    SELF_FIX[[Self-correct via Claude]]
+    VISUAL_CHECK{Visual match?}
+    VISUAL_FIX[[Regenerate mapping]]
+    PUBLISH[[Publish batch to MCP]]
+    CHROMATIC{Visual regression pass?}
+    PR[Open PR with full diff]
+    Q([Merge and sync complete])
+
+    TRIGGER -->|note| TRIGGER_NOTE
+    TRIGGER --> AUDIT
+    AUDIT -->|note| AUDIT_NOTE
+    AUDIT --> CLASSIFY
+    CLASSIFY -->|new in Figma| N_FIGMA
+    CLASSIFY -->|new in code| N_CODE
+    CLASSIFY -->|both changed| DRIFT
+    CLASSIFY -->|no change| INSYNC
+    CLASSIFY -->|Figma changed| CHANGED_FIGMA
+    CLASSIFY -->|code changed| CHANGED_CODE
+    DRIFT --> RESOLVE
+    RESOLVE -->|note| RESOLVE_NOTE
+    RESOLVE -->|Figma wins| CHANGED_FIGMA
+    RESOLVE -->|code wins| CHANGED_CODE
+    N_FIGMA --> SCAFFOLD
+    SCAFFOLD -->|note| SCAFFOLD_NOTE
+    CHANGED_FIGMA --> SCAFFOLD
+    N_CODE --> GEN_MAP
+    GEN_MAP -->|note| GEN_MAP_NOTE
+    CHANGED_CODE --> UPDATE_MAP
+    UPDATE_MAP --> TS_CHECK
+    SCAFFOLD --> GEN_MAP
+    GEN_MAP --> TS_CHECK
+    TS_CHECK -->|fail| SELF_FIX
+    SELF_FIX --> TS_CHECK
+    TS_CHECK -->|pass| VISUAL_CHECK
+    VISUAL_CHECK -->|fail| VISUAL_FIX
+    VISUAL_FIX --> VISUAL_CHECK
+    VISUAL_CHECK -->|pass| PUBLISH
+    UPDATE_COMP --> TS_CHECK
+    CHANGED_FIGMA --> UPDATE_COMP
+    INSYNC --> PUBLISH
+    PUBLISH --> CHROMATIC
+    CHROMATIC -->|fail| PR
+    CHROMATIC -->|pass| PR
+    PR --> Q

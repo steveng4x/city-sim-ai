@@ -31,6 +31,7 @@ export function Toolbar({
   isEditorVisible,
   layoutDirection,
   formattingLogic,
+  isForceLayoutEnabled,
   folderOptions,
   selectedFolder,
   files,
@@ -49,6 +50,7 @@ export function Toolbar({
   onApplyRender,
   onLayoutDirectionChange,
   onFormattingLogicChange,
+  onForceLayoutToggle,
   onToggleToolbarVisibility,
   onToggleEditorVisibility,
   onToggleFullscreenChrome,
@@ -253,6 +255,17 @@ export function Toolbar({
                       </option>
                     ))}
                   </select>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Force
+                  </span>
+                  <button
+                    data-testid="flowchart-force-layout-toggle"
+                    type="button"
+                    onClick={onForceLayoutToggle}
+                    className={`rounded-xl px-3 py-2 text-xs font-medium transition ${isForceLayoutEnabled ? "bg-emerald-500/18 text-emerald-300 hover:bg-emerald-500/30" : "border border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-600 hover:bg-slate-800"}`}
+                  >
+                    {isForceLayoutEnabled ? "Enabled" : "Disabled"}
+                  </button>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -552,6 +565,17 @@ export function Toolbar({
                     </option>
                   ))}
                 </select>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 pl-3">
+                  Force
+                </span>
+                <button
+                  data-testid="flowchart-force-layout-toggle"
+                  type="button"
+                  onClick={onForceLayoutToggle}
+                  className={`rounded-xl px-3 py-2 text-xs font-medium transition ${isForceLayoutEnabled ? "bg-emerald-500/18 text-emerald-300 hover:bg-emerald-500/30" : "border border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-600 hover:bg-slate-800"}`}
+                >
+                  {isForceLayoutEnabled ? "Enabled" : "Disabled"}
+                </button>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button

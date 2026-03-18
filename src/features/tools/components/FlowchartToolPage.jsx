@@ -88,6 +88,7 @@ export default function FlowchartToolPage() {
   const [formattingLogic, setFormattingLogic] = React.useState(
     FLOWCHART_DEFAULT_FORMATTING_LOGIC,
   );
+  const [isForceLayoutEnabled, setIsForceLayoutEnabled] = React.useState(false);
 
   React.useEffect(() => {
     const handleFullscreenChange = () => {
@@ -188,6 +189,21 @@ export default function FlowchartToolPage() {
     [updateStatus],
   );
 
+  const handleForceLayoutToggle = React.useCallback(() => {
+    setIsForceLayoutEnabled((currentValue) => {
+      const nextValue = !currentValue;
+
+      updateStatus(
+        nextValue
+          ? "Force layout simulation enabled"
+          : "Force layout simulation disabled",
+        "info",
+      );
+
+      return nextValue;
+    });
+  }, [updateStatus]);
+
   return (
     <PageTransition className="min-h-screen" variant="forward">
       <div
@@ -221,6 +237,7 @@ export default function FlowchartToolPage() {
           isEditorVisible={isEditorVisible}
           layoutDirection={layoutDirection}
           formattingLogic={formattingLogic}
+          isForceLayoutEnabled={isForceLayoutEnabled}
           folderOptions={folderOptions}
           selectedFolder={selectedFolder}
           files={files}
@@ -239,6 +256,7 @@ export default function FlowchartToolPage() {
           onApplyRender={applyCurrentEditorMermaid}
           onLayoutDirectionChange={handleLayoutDirectionChange}
           onFormattingLogicChange={handleFormattingLogicChange}
+          onForceLayoutToggle={handleForceLayoutToggle}
           onToggleToolbarVisibility={handleToggleToolbarVisibility}
           onToggleEditorVisibility={handleToggleEditorVisibility}
           onToggleFullscreenChrome={handleToggleFullscreenChrome}
@@ -269,6 +287,7 @@ export default function FlowchartToolPage() {
               isFullscreen={isFullscreen}
               orientation={layoutDirection}
               formattingLogic={formattingLogic}
+              isForceLayoutEnabled={isForceLayoutEnabled}
             />
           </div>
         </main>
