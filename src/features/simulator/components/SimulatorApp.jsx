@@ -97,12 +97,14 @@ export function SimulatorApp() {
             provinceSnapshots={engine.provinceSnapshots}
             warEventSnapshots={engine.warEventSnapshots}
             provinceRegistry={engine.provinceRegistry}
+            megaCityRegistry={engine.megaCityRegistry}
             currentEpoch={engine.currentEpoch}
             viewMode={engine.viewMode}
             seaLevel={engine.seaLevel}
             finishGeneration={engine.finishGeneration}
             showRivers={showRivers}
             showResources={showResources}
+            desiredFactions={engine.desiredFactions}
           />
           <SimulatorTimeline
             playing={engine.playing}

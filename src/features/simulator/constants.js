@@ -8,12 +8,16 @@ export const BUFFER_THRESHOLD = 5;
 export const LOOKAHEAD_SIZE = 20;
 export const MAX_STORED_EPOCHS = 2000;
 
+// Mega-city constants
+export const MEGACITY_DENSITY = 9;
+export const MEGACITY_CAP_DIVISOR = 300; // 1 mega-city per 300 tiles owned
+
 export const factionColors = [
-  "#ef4444",
-  "#3b82f6",
-  "#10b981",
-  "#a855f7",
-  "#f59e0b",
+  "#ff6b6b", // Coral red — contrasts with green terrain, distinct from gold
+  "#e040fb", // Magenta/pink — contrasts with all greens and blues
+  "#ffea00", // Bright yellow — pops against dark green and blue ocean
+  "#ff3d00", // Deep orange-red — distinct from terrain grays and greens
+  "#ea80fc", // Light purple — contrasts with green/brown terrain tones
 ];
 
 export const accentMap = {

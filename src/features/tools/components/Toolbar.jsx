@@ -15,6 +15,7 @@ import {
   Sparkles,
   Wand2,
 } from "lucide-react";
+import BorderGlow from "@/components/BorderGlow";
 import {
   FLOWCHART_FORMATTING_LOGIC_OPTIONS,
   getStatusClasses,
@@ -127,181 +128,199 @@ export function Toolbar({
             className={`overflow-hidden transition-[max-height,opacity,transform,margin] duration-300 ease-out ${isFullscreenChromeExpanded ? "pointer-events-auto mt-3 max-h-[48rem] translate-y-0 opacity-100" : "pointer-events-none mt-0 max-h-0 -translate-y-2 opacity-0"}`}
           >
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto]">
-              <div className="rounded-2xl border border-slate-800/80 bg-slate-950/78 p-3 shadow-[0_18px_60px_rgba(2,6,23,0.48)] backdrop-blur-xl">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  File Source
-                </p>
-                <div className="grid gap-2">
+              <BorderGlow
+                borderRadius={16}
+                backgroundColor="#020617"
+                colors={["#c084fc", "#f472b6", "#38bdf8"]}
+              >
+                <div className="rounded-2xl border border-slate-800/80 bg-slate-950/78 p-3 shadow-[0_18px_60px_rgba(2,6,23,0.48)] backdrop-blur-xl">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    File Source
+                  </p>
+                  <div className="grid gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        value={selectedFolder}
+                        onChange={(event) =>
+                          onSelectedFolderChange(event.target.value)
+                        }
+                        className="min-w-44 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
+                      >
+                        {folderOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={onChooseLocalFolder}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                      >
+                        <FolderOpen size={14} />
+                        Choose Local
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        data-testid="flowchart-file-select"
+                        value={selectedFile}
+                        onChange={(event) =>
+                          onSelectedFileChange(event.target.value)
+                        }
+                        className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
+                      >
+                        <option value="">Choose flowchart file</option>
+                        {files.map((currentFile) => (
+                          <option key={currentFile} value={currentFile}>
+                            {currentFile}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={onRefresh}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                      >
+                        <RefreshCw size={14} />
+                        Refresh
+                      </button>
+                      <button
+                        data-testid="flowchart-apply-file"
+                        type="button"
+                        onClick={onApplyFile}
+                        className="inline-flex items-center gap-2 rounded-xl bg-sky-500/15 px-3 py-2.5 text-sm font-medium text-sky-300 transition hover:bg-sky-500/25"
+                      >
+                        <FolderOpen size={14} />
+                        Apply File
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </BorderGlow>
+
+              <BorderGlow
+                borderRadius={16}
+                backgroundColor="#020617"
+                colors={["#c084fc", "#f472b6", "#38bdf8"]}
+              >
+                <div className="rounded-2xl p-3 shadow-[0_18px_60px_rgba(2,6,23,0.48)] backdrop-blur-xl">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Save Target
+                  </p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <select
-                      value={selectedFolder}
-                      onChange={(event) =>
-                        onSelectedFolderChange(event.target.value)
-                      }
-                      className="min-w-44 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
+                    <input
+                      value={fileName}
+                      onChange={(event) => onFileNameChange(event.target.value)}
+                      placeholder="flowchart-name.mmd"
+                      className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-amber-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={onSave}
+                      className="inline-flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2.5 text-sm font-medium text-amber-300 transition hover:bg-amber-500/25"
                     >
-                      {folderOptions.map((option) => (
+                      <Save size={14} />
+                      Save Mermaid
+                    </button>
+                  </div>
+                </div>
+              </BorderGlow>
+
+              <BorderGlow
+                borderRadius={16}
+                backgroundColor="#020617"
+                colors={["#c084fc", "#f472b6", "#38bdf8"]}
+              >
+                <div className="rounded-2xl border border-slate-800/80 bg-slate-950/78 p-3 shadow-[0_18px_60px_rgba(2,6,23,0.48)] backdrop-blur-xl xl:min-w-[328px]">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Actions
+                  </p>
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Reformat
+                    </span>
+                    <div className="inline-flex rounded-xl border border-slate-700 bg-slate-950 p-1">
+                      <button
+                        type="button"
+                        onClick={() => onLayoutDirectionChange("horizontal")}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "horizontal" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                      >
+                        Horizontal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onLayoutDirectionChange("vertical")}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "vertical" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                      >
+                        Vertical
+                      </button>
+                    </div>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Formatting Logic
+                    </span>
+                    <select
+                      data-testid="flowchart-formatting-logic-select"
+                      value={formattingLogic}
+                      onChange={(event) =>
+                        onFormattingLogicChange(event.target.value)
+                      }
+                      className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-medium text-slate-100 outline-none transition focus:border-sky-500"
+                    >
+                      {FLOWCHART_FORMATTING_LOGIC_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
                       ))}
                     </select>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Force
+                    </span>
                     <button
+                      data-testid="flowchart-force-layout-toggle"
                       type="button"
-                      onClick={onChooseLocalFolder}
-                      className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                      onClick={onForceLayoutToggle}
+                      className={`rounded-xl px-3 py-2 text-xs font-medium transition ${isForceLayoutEnabled ? "bg-emerald-500/18 text-emerald-300 hover:bg-emerald-500/30" : "border border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-600 hover:bg-slate-800"}`}
                     >
-                      <FolderOpen size={14} />
-                      Choose Local
+                      {isForceLayoutEnabled ? "Enabled" : "Disabled"}
                     </button>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <select
-                      data-testid="flowchart-file-select"
-                      value={selectedFile}
-                      onChange={(event) =>
-                        onSelectedFileChange(event.target.value)
-                      }
-                      className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
-                    >
-                      <option value="">Choose flowchart file</option>
-                      {files.map((currentFile) => (
-                        <option key={currentFile} value={currentFile}>
-                          {currentFile}
-                        </option>
-                      ))}
-                    </select>
                     <button
                       type="button"
-                      onClick={onRefresh}
-                      className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                      onClick={onOpenGenerate}
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:from-violet-600 hover:to-indigo-700"
                     >
-                      <RefreshCw size={14} />
-                      Refresh
-                    </button>
-                    <button
-                      data-testid="flowchart-apply-file"
-                      type="button"
-                      onClick={onApplyFile}
-                      className="inline-flex items-center gap-2 rounded-xl bg-sky-500/15 px-3 py-2.5 text-sm font-medium text-sky-300 transition hover:bg-sky-500/25"
-                    >
-                      <FolderOpen size={14} />
-                      Apply File
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-800/80 bg-slate-950/78 p-3 shadow-[0_18px_60px_rgba(2,6,23,0.48)] backdrop-blur-xl">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Save Target
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    value={fileName}
-                    onChange={(event) => onFileNameChange(event.target.value)}
-                    placeholder="flowchart-name.mmd"
-                    className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-amber-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={onSave}
-                    className="inline-flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2.5 text-sm font-medium text-amber-300 transition hover:bg-amber-500/25"
-                  >
-                    <Save size={14} />
-                    Save Mermaid
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-800/80 bg-slate-950/78 p-3 shadow-[0_18px_60px_rgba(2,6,23,0.48)] backdrop-blur-xl xl:min-w-[328px]">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Actions
-                </p>
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Reformat
-                  </span>
-                  <div className="inline-flex rounded-xl border border-slate-700 bg-slate-950 p-1">
-                    <button
-                      type="button"
-                      onClick={() => onLayoutDirectionChange("horizontal")}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "horizontal" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
-                    >
-                      Horizontal
+                      <Sparkles size={14} />
+                      Generate
                     </button>
                     <button
                       type="button"
-                      onClick={() => onLayoutDirectionChange("vertical")}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "vertical" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                      onClick={onExplain}
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2.5 text-sm font-medium text-white transition hover:from-emerald-600 hover:to-teal-700"
                     >
-                      Vertical
+                      <BrainCircuit size={14} />
+                      Explain
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onResetView}
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                    >
+                      <RotateCcw size={14} />
+                      Reset View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onApplyRender}
+                      className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-700"
+                    >
+                      <Wand2 size={14} />
+                      Apply and Render
                     </button>
                   </div>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Formatting Logic
-                  </span>
-                  <select
-                    data-testid="flowchart-formatting-logic-select"
-                    value={formattingLogic}
-                    onChange={(event) =>
-                      onFormattingLogicChange(event.target.value)
-                    }
-                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-medium text-slate-100 outline-none transition focus:border-sky-500"
-                  >
-                    {FLOWCHART_FORMATTING_LOGIC_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Force
-                  </span>
-                  <button
-                    data-testid="flowchart-force-layout-toggle"
-                    type="button"
-                    onClick={onForceLayoutToggle}
-                    className={`rounded-xl px-3 py-2 text-xs font-medium transition ${isForceLayoutEnabled ? "bg-emerald-500/18 text-emerald-300 hover:bg-emerald-500/30" : "border border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-600 hover:bg-slate-800"}`}
-                  >
-                    {isForceLayoutEnabled ? "Enabled" : "Disabled"}
-                  </button>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={onOpenGenerate}
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:from-violet-600 hover:to-indigo-700"
-                  >
-                    <Sparkles size={14} />
-                    Generate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onExplain}
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2.5 text-sm font-medium text-white transition hover:from-emerald-600 hover:to-teal-700"
-                  >
-                    <BrainCircuit size={14} />
-                    Explain
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onResetView}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
-                  >
-                    <RotateCcw size={14} />
-                    Reset View
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onApplyRender}
-                    className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-700"
-                  >
-                    <Wand2 size={14} />
-                    Apply and Render
-                  </button>
-                </div>
-              </div>
+              </BorderGlow>
             </div>
           </div>
         </div>
@@ -437,193 +456,211 @@ export function Toolbar({
           className={`overflow-hidden transition-[max-height,opacity,transform,margin] duration-300 ease-out ${isToolbarVisible ? "pointer-events-auto mt-4 max-h-[48rem] translate-y-0 opacity-100" : "pointer-events-none mt-0 max-h-0 -translate-y-3 opacity-0"}`}
         >
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto]">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                File Source
-              </p>
-              <div className="grid gap-2">
+            <BorderGlow
+              borderRadius={16}
+              backgroundColor="#0f172a"
+              colors={["#c084fc", "#f472b6", "#38bdf8"]}
+            >
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  File Source
+                </p>
+                <div className="grid gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={selectedFolder}
+                      onChange={(event) =>
+                        onSelectedFolderChange(event.target.value)
+                      }
+                      className="min-w-44 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
+                    >
+                      {folderOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={onChooseLocalFolder}
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                    >
+                      <FolderOpen size={14} />
+                      Choose Local
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      data-testid="flowchart-file-select"
+                      value={selectedFile}
+                      onChange={(event) =>
+                        onSelectedFileChange(event.target.value)
+                      }
+                      className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
+                    >
+                      <option value="">Choose flowchart file</option>
+                      {files.map((currentFile) => (
+                        <option key={currentFile} value={currentFile}>
+                          {currentFile}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={onRefresh}
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                    >
+                      <RefreshCw size={14} />
+                      Refresh
+                    </button>
+                    <button
+                      data-testid="flowchart-apply-file"
+                      type="button"
+                      onClick={onApplyFile}
+                      className="inline-flex items-center gap-2 rounded-xl bg-sky-500/15 px-3 py-2.5 text-sm font-medium text-sky-300 transition hover:bg-sky-500/25"
+                    >
+                      <FolderOpen size={14} />
+                      Apply File
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </BorderGlow>
+
+            <BorderGlow
+              borderRadius={16}
+              backgroundColor="#0f172a"
+              colors={["#c084fc", "#f472b6", "#38bdf8"]}
+            >
+              <div className="rounded-2xl p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Save Target
+                </p>
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    value={selectedFolder}
-                    onChange={(event) =>
-                      onSelectedFolderChange(event.target.value)
-                    }
-                    className="min-w-44 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
+                  <input
+                    value={fileName}
+                    onChange={(event) => onFileNameChange(event.target.value)}
+                    placeholder="flowchart-name.mmd"
+                    className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-amber-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={onSave}
+                    className="inline-flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2.5 text-sm font-medium text-amber-300 transition hover:bg-amber-500/25"
                   >
-                    {folderOptions.map((option) => (
+                    <Save size={14} />
+                    Save Mermaid
+                  </button>
+                </div>
+              </div>
+            </BorderGlow>
+
+            <BorderGlow
+              borderRadius={16}
+              backgroundColor="#0f172a"
+              colors={["#c084fc", "#f472b6", "#38bdf8"]}
+            >
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] xl:min-w-[328px]">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Actions
+                </p>
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Reformat
+                  </span>
+                  <div className="inline-flex rounded-xl border border-slate-700 bg-slate-950 p-1">
+                    <button
+                      type="button"
+                      onClick={() => onLayoutDirectionChange("horizontal")}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "horizontal" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                    >
+                      Horizontal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onLayoutDirectionChange("vertical")}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "vertical" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                    >
+                      Vertical
+                    </button>
+                  </div>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 pl-3">
+                    Logic
+                  </span>
+                  <select
+                    data-testid="flowchart-formatting-logic-select"
+                    value={formattingLogic}
+                    onChange={(event) =>
+                      onFormattingLogicChange(event.target.value)
+                    }
+                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-medium text-slate-100 outline-none transition focus:border-sky-500"
+                  >
+                    {FLOWCHART_FORMATTING_LOGIC_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </select>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 pl-3">
+                    Force
+                  </span>
                   <button
+                    data-testid="flowchart-force-layout-toggle"
                     type="button"
-                    onClick={onChooseLocalFolder}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                    onClick={onForceLayoutToggle}
+                    className={`rounded-xl px-3 py-2 text-xs font-medium transition ${isForceLayoutEnabled ? "bg-emerald-500/18 text-emerald-300 hover:bg-emerald-500/30" : "border border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-600 hover:bg-slate-800"}`}
                   >
-                    <FolderOpen size={14} />
-                    Choose Local
+                    {isForceLayoutEnabled ? "Enabled" : "Disabled"}
                   </button>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    data-testid="flowchart-file-select"
-                    value={selectedFile}
-                    onChange={(event) =>
-                      onSelectedFileChange(event.target.value)
-                    }
-                    className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500"
-                  >
-                    <option value="">Choose flowchart file</option>
-                    {files.map((currentFile) => (
-                      <option key={currentFile} value={currentFile}>
-                        {currentFile}
-                      </option>
-                    ))}
-                  </select>
                   <button
                     type="button"
-                    onClick={onRefresh}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                    onClick={onOpenGenerate}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:from-violet-600 hover:to-indigo-700"
                   >
-                    <RefreshCw size={14} />
-                    Refresh
-                  </button>
-                  <button
-                    data-testid="flowchart-apply-file"
-                    type="button"
-                    onClick={onApplyFile}
-                    className="inline-flex items-center gap-2 rounded-xl bg-sky-500/15 px-3 py-2.5 text-sm font-medium text-sky-300 transition hover:bg-sky-500/25"
-                  >
-                    <FolderOpen size={14} />
-                    Apply File
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Save Target
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  value={fileName}
-                  onChange={(event) => onFileNameChange(event.target.value)}
-                  placeholder="flowchart-name.mmd"
-                  className="min-w-52 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-amber-500"
-                />
-                <button
-                  type="button"
-                  onClick={onSave}
-                  className="inline-flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2.5 text-sm font-medium text-amber-300 transition hover:bg-amber-500/25"
-                >
-                  <Save size={14} />
-                  Save Mermaid
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] xl:min-w-[328px]">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Actions
-              </p>
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Reformat
-                </span>
-                <div className="inline-flex rounded-xl border border-slate-700 bg-slate-950 p-1">
-                  <button
-                    type="button"
-                    onClick={() => onLayoutDirectionChange("horizontal")}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "horizontal" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
-                  >
-                    Horizontal
+                    <Sparkles size={14} />
+                    Generate
                   </button>
                   <button
                     type="button"
-                    onClick={() => onLayoutDirectionChange("vertical")}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${layoutDirection === "vertical" ? "bg-sky-500/20 text-sky-300" : "text-slate-300 hover:bg-slate-800"}`}
+                    onClick={onExplain}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2.5 text-sm font-medium text-white transition hover:from-emerald-600 hover:to-teal-700"
                   >
-                    Vertical
+                    <BrainCircuit size={14} />
+                    Explain
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onResetView}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                  >
+                    <RotateCcw size={14} />
+                    Reset View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onToggleFullscreen}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
+                  >
+                    {isFullscreen ? (
+                      <Minimize size={14} />
+                    ) : (
+                      <Maximize size={14} />
+                    )}
+                    {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onApplyRender}
+                    className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-700"
+                  >
+                    <Wand2 size={14} />
+                    Apply and Render
                   </button>
                 </div>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 pl-3">
-                  Logic
-                </span>
-                <select
-                  data-testid="flowchart-formatting-logic-select"
-                  value={formattingLogic}
-                  onChange={(event) =>
-                    onFormattingLogicChange(event.target.value)
-                  }
-                  className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-medium text-slate-100 outline-none transition focus:border-sky-500"
-                >
-                  {FLOWCHART_FORMATTING_LOGIC_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 pl-3">
-                  Force
-                </span>
-                <button
-                  data-testid="flowchart-force-layout-toggle"
-                  type="button"
-                  onClick={onForceLayoutToggle}
-                  className={`rounded-xl px-3 py-2 text-xs font-medium transition ${isForceLayoutEnabled ? "bg-emerald-500/18 text-emerald-300 hover:bg-emerald-500/30" : "border border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-600 hover:bg-slate-800"}`}
-                >
-                  {isForceLayoutEnabled ? "Enabled" : "Disabled"}
-                </button>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={onOpenGenerate}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:from-violet-600 hover:to-indigo-700"
-                >
-                  <Sparkles size={14} />
-                  Generate
-                </button>
-                <button
-                  type="button"
-                  onClick={onExplain}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2.5 text-sm font-medium text-white transition hover:from-emerald-600 hover:to-teal-700"
-                >
-                  <BrainCircuit size={14} />
-                  Explain
-                </button>
-                <button
-                  type="button"
-                  onClick={onResetView}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
-                >
-                  <RotateCcw size={14} />
-                  Reset View
-                </button>
-                <button
-                  type="button"
-                  onClick={onToggleFullscreen}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-600 hover:bg-slate-800"
-                >
-                  {isFullscreen ? (
-                    <Minimize size={14} />
-                  ) : (
-                    <Maximize size={14} />
-                  )}
-                  {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-                </button>
-                <button
-                  type="button"
-                  onClick={onApplyRender}
-                  className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-700"
-                >
-                  <Wand2 size={14} />
-                  Apply and Render
-                </button>
-              </div>
-            </div>
+            </BorderGlow>
           </div>
         </div>
       </header>

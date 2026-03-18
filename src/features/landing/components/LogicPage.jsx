@@ -557,7 +557,7 @@ export default function ProvinceSystemDiagram() {
               }}
             >
               <Card
-                title="citySnapshots"
+                title="City Snapshots"
                 tag="existing"
                 tagColor={COLORS.textDim}
                 accent={COLORS.textDim}
@@ -599,7 +599,7 @@ export default function ProvinceSystemDiagram() {
               </Card>
 
               <Card
-                title="provinceSnapshots"
+                title="Province Snapshots"
                 tag="new"
                 tagColor={COLORS.green}
                 accent={COLORS.green}
@@ -641,7 +641,7 @@ export default function ProvinceSystemDiagram() {
               </Card>
 
               <Card
-                title="provinceRegistry"
+                title="Province Registry"
                 tag="new"
                 tagColor={COLORS.purple}
                 accent={COLORS.purple}

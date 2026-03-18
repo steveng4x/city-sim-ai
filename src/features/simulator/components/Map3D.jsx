@@ -6,7 +6,7 @@ import { InstancedMap } from "./InstancedMap";
 import { WarIndicators } from "./WarIndicators";
 import { mapW, mapH } from "@/features/simulator";
 
-export function Map3D(props) {
+export function Map3D({ onTileHover, onTileClick, ...props }) {
   return (
     <div className="w-full h-full relative cursor-crosshair">
       <Canvas
@@ -31,7 +31,7 @@ export function Map3D(props) {
         />
 
         <Suspense fallback={null}>
-          <InstancedMap {...props} />
+          <InstancedMap {...props} onTileHover={onTileHover} onTileClick={onTileClick} />
           <WarIndicators {...props} />
           <EffectComposer disableNormalPass>
             <Bloom luminanceThreshold={1} mipmapBlur intensity={1.0} />

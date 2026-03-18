@@ -31,6 +31,21 @@ export function computeOneEpoch(state, terrain, ep) {
   let nextInfra = new Uint8Array(currentInfra);
   let currentEpochEvents = [];
 
+  // --- MEGA-CITY CAP: Count existing density-9 tiles and territory per faction ---
+  const MEGACITY_DENSITY = 9;
+  const MEGACITY_CAP_DIVISOR = 300;
+  const factionTileCount = {};
+  const factionMegaCityCount = {};
+  for (let i = 0; i < mapW * mapH; i++) {
+    if (currentCity[i] > 0) {
+      const fId = Math.floor(currentCity[i] / 10);
+      factionTileCount[fId] = (factionTileCount[fId] || 0) + 1;
+      if (currentCity[i] % 10 >= MEGACITY_DENSITY) {
+        factionMegaCityCount[fId] = (factionMegaCityCount[fId] || 0) + 1;
+      }
+    }
+  }
+
   for (let y = 0; y < mapH; y++) {
     for (let x = 0; x < mapW; x++) {
       let idx = y * mapW + x;
@@ -137,10 +152,7 @@ export function computeOneEpoch(state, terrain, ep) {
               // Extra chance to sprawl along roads
               if (currentInfra[nIdx] === 1) sprawlChance *= 2;
 
-              if (
-                Math.random() < sprawlChance &&
-                nextCity[nIdx] === 0
-              ) {
+              if (Math.random() < sprawlChance && nextCity[nIdx] === 0) {
                 nextCity[nIdx] = tId * 10 + 1; // Start as village
                 currentProv[nIdx] = currentProv[idx];
               }
@@ -151,10 +163,22 @@ export function computeOneEpoch(state, terrain, ep) {
                 let nDensity = nVal % 10;
                 let defBonus = currentInfra[nIdx] === 2 ? 3 : 0; // Wall defense
 
-                if (
-                  density > nDensity + defBonus &&
-                  Math.random() < 0.1
-                ) {
+                // Border consolidation: allied neighbors boost defense
+                let allyNeighborCount = 0;
+                for (const nn of neighbors) {
+                  const nnx = nx + nn.dx,
+                    nny = ny + nn.dy;
+                  if (nnx >= 0 && nnx < mapW && nny >= 0 && nny < mapH) {
+                    const nnVal = currentCity[nny * mapW + nnx];
+                    if (nnVal > 0 && Math.floor(nnVal / 10) === nTId)
+                      allyNeighborCount++;
+                  }
+                }
+                // Tiles surrounded by allies are harder to take
+                if (allyNeighborCount >= 5) defBonus += 2;
+
+                // Reduced attack frequency: 5% base (was 10%)
+                if (density > nDensity + defBonus && Math.random() < 0.05) {
                   let degraded = nDensity - 2;
                   // If taking over a walled city, the wall is destroyed
                   if (degraded <= 0) {
@@ -164,10 +188,10 @@ export function computeOneEpoch(state, terrain, ep) {
                     if (density >= 8) momentum = 3;
                     else if (density >= 6) momentum = 2;
 
-                    // CRITICAL PUSH: Small chance for a massive breakthrough!
-                    const isCritical = Math.random() < 0.35; // 35% chance
+                    // CRITICAL PUSH: Rare massive breakthrough
+                    const isCritical = Math.random() < 0.1; // 10% chance (was 35%)
                     if (isCritical) {
-                      momentum *= 8;
+                      momentum *= 4; // Reduced from 8x to 4x
                       currentEpochEvents.push({
                         type: "CRITICAL_PUSH",
                         x: x + n.dx,
@@ -180,12 +204,7 @@ export function computeOneEpoch(state, terrain, ep) {
                     let cy = y + n.dy;
 
                     for (let step = 0; step < momentum; step++) {
-                      if (
-                        cx >= 0 &&
-                        cx < mapW &&
-                        cy >= 0 &&
-                        cy < mapH
-                      ) {
+                      if (cx >= 0 && cx < mapW && cy >= 0 && cy < mapH) {
                         let cIdx = cy * mapW + cx;
                         let cVal = currentCity[cIdx];
 
@@ -225,12 +244,10 @@ export function computeOneEpoch(state, terrain, ep) {
                             if (
                               pId > 0 &&
                               pRegistry[pId] &&
-                              pRegistry[pId].factionId ===
-                                targetFactionId
+                              pRegistry[pId].factionId === targetFactionId
                             ) {
                               pRegistry[pId].lostTilesCount =
-                                (pRegistry[pId].lostTilesCount || 0) +
-                                1;
+                                (pRegistry[pId].lostTilesCount || 0) + 1;
                               if (
                                 pRegistry[pId].baselineSize > 0 &&
                                 pRegistry[pId].lostTilesCount >=
@@ -300,27 +317,20 @@ export function computeOneEpoch(state, terrain, ep) {
                             // 40% splash chance
                             let sx = cx + sn.dx;
                             let sy = cy + sn.dy;
-                            if (
-                              sx >= 0 &&
-                              sx < mapW &&
-                              sy >= 0 &&
-                              sy < mapH
-                            ) {
+                            if (sx >= 0 && sx < mapW && sy >= 0 && sy < mapH) {
                               let sIdx = sy * mapW + sx;
                               let sVal = currentCity[sIdx];
                               // Only splash enemy or neutral (not water, not own)
                               if (
                                 hMap[sIdx] > sl &&
-                                (sVal === 0 ||
-                                  Math.floor(sVal / 10) !== tId)
+                                (sVal === 0 || Math.floor(sVal / 10) !== tId)
                               ) {
                                 nextCity[sIdx] = tId * 10 + 1;
                                 nextInfra[sIdx] = 0;
                                 currentProv[sIdx] = currentProv[idx]; // Keep province view synced
                                 if (sVal > 0) {
                                   let sTId = Math.floor(sVal / 10);
-                                  if (sTId !== tId)
-                                    processTileLoss(sIdx, sTId);
+                                  if (sTId !== tId) processTileLoss(sIdx, sTId);
                                 }
                               }
                             }
@@ -356,9 +366,7 @@ export function computeOneEpoch(state, terrain, ep) {
 
           if (waterNeighbors.length > 0) {
             let dir =
-              waterNeighbors[
-                Math.floor(Math.random() * waterNeighbors.length)
-              ];
+              waterNeighbors[Math.floor(Math.random() * waterNeighbors.length)];
             let ex = x,
               ey = y;
 
@@ -389,12 +397,7 @@ export function computeOneEpoch(state, terrain, ep) {
                   for (let ln of landNeighbors) {
                     let lnx = ex + ln.dx,
                       lny = ey + ln.dy;
-                    if (
-                      lnx >= 0 &&
-                      lnx < mapW &&
-                      lny >= 0 &&
-                      lny < mapH
-                    ) {
+                    if (lnx >= 0 && lnx < mapW && lny >= 0 && lny < mapH) {
                       let lnIdx = lny * mapW + lnx;
                       let lnVal = currentCity[lnIdx];
                       if (lnVal > 0 && Math.floor(lnVal / 10) !== tId) {
@@ -444,34 +447,226 @@ export function computeOneEpoch(state, terrain, ep) {
             if (highestNeighborDensity <= density) {
               // --- RULE 4: Agglomeration Effect ---
               let suburbCount = 0;
+              let highDensityAllyCount = 0;
               neighbors.forEach((n) => {
                 let nx = x + n.dx,
                   ny = y + n.dy;
                 if (nx >= 0 && nx < mapW && ny >= 0 && ny < mapH) {
                   let nVal = currentCity[ny * mapW + nx];
                   if (nVal > 0 && nVal % 10 < 4) suburbCount++;
+                  // Count high-density allies nearby (for mega-city growth)
+                  if (
+                    nVal > 0 &&
+                    Math.floor(nVal / 10) === tId &&
+                    nVal % 10 >= 6
+                  ) {
+                    highDensityAllyCount++;
+                  }
                 }
               });
 
               if (Math.random() < 0.015 * suburbCount) {
                 growChance = 1;
               }
+
+              // Mega-city promotion: density 7-8 tiles near other high-density allies get a boost
+              if (
+                growChance === 0 &&
+                density >= 7 &&
+                highDensityAllyCount >= 3 &&
+                Math.random() < 0.03
+              ) {
+                growChance = 1;
+              }
             }
           }
 
           // Quicker upgrades if near roads
-          if (
-            growChance === 0 &&
-            infraVal === 1 &&
-            Math.random() < 0.02
-          ) {
+          if (growChance === 0 && infraVal === 1 && Math.random() < 0.02) {
             growChance = 1;
           }
 
           if (growChance > 0 && nextCity[idx] === val) {
-            nextCity[idx] = tId * 10 + (density + 1);
+            const newDensity = density + 1;
+
+            // --- RULE 6: Mega-city cap ---
+            if (newDensity >= MEGACITY_DENSITY) {
+              const maxMegaCities = Math.max(
+                1,
+                Math.floor((factionTileCount[tId] || 0) / MEGACITY_CAP_DIVISOR),
+              );
+              const currentMegaCities = factionMegaCityCount[tId] || 0;
+              if (currentMegaCities >= maxMegaCities) {
+                // Cap reached — block growth to mega-city density
+                // (density stays at current level, no upgrade)
+              } else {
+                nextCity[idx] = tId * 10 + newDensity;
+                factionMegaCityCount[tId] = currentMegaCities + 1;
+                currentEpochEvents.push({
+                  type: "MEGACITY_BORN",
+                  x,
+                  y,
+                  tileIndex: idx,
+                  factionId: tId,
+                });
+              }
+            } else {
+              nextCity[idx] = tId * 10 + newDensity;
+            }
           }
         }
+      }
+    }
+  }
+
+  // --- RULE 5: Density Decay (prevents overdevelopment) ---
+  // Tiles surrounded mostly by enemies or empty land slowly lose density
+  if (ep % 3 === 0) {
+    for (let y = 0; y < mapH; y++) {
+      for (let x = 0; x < mapW; x++) {
+        const idx = y * mapW + x;
+        if (nextCity[idx] === 0) continue;
+        const tId = Math.floor(nextCity[idx] / 10);
+        const density = nextCity[idx] % 10;
+        if (density <= 2) continue; // Don't decay tiny settlements
+
+        let allyCount = 0;
+        let enemyCount = 0;
+        const nbs = [
+          { dx: 0, dy: -1 },
+          { dx: 0, dy: 1 },
+          { dx: -1, dy: 0 },
+          { dx: 1, dy: 0 },
+        ];
+        for (const n of nbs) {
+          const nx = x + n.dx,
+            ny = y + n.dy;
+          if (nx >= 0 && nx < mapW && ny >= 0 && ny < mapH) {
+            const nVal = nextCity[ny * mapW + nx];
+            if (nVal > 0) {
+              if (Math.floor(nVal / 10) === tId) allyCount++;
+              else enemyCount++;
+            }
+          }
+        }
+
+        // Isolated tiles (surrounded mostly by enemies/empty) decay
+        if (enemyCount >= 2 && allyCount === 0 && Math.random() < 0.15) {
+          nextCity[idx] = tId * 10 + Math.max(1, density - 1);
+        }
+        // Overextended tiles (no allies at all) decay slowly
+        else if (allyCount === 0 && density >= 5 && Math.random() < 0.05) {
+          nextCity[idx] = tId * 10 + (density - 1);
+        }
+      }
+    }
+  }
+
+  // --- PERTURBATION EVENTS (anti-stagnation for infinite mode) ---
+  // Every 50 epochs (starting at epoch 100), check for stagnation and inject chaos
+  if (ep >= 100 && ep % 50 === 0) {
+    let changedTiles = 0;
+    for (let i = 0; i < mapW * mapH; i++) {
+      if (nextCity[i] !== currentCity[i]) changedTiles++;
+    }
+    const changeRate = changedTiles / (mapW * mapH);
+
+    // If less than 2% of tiles changed, the world is stagnating — inject perturbation
+    if (changeRate < 0.02) {
+      const perturbationType = ep % 150; // Cycle through event types
+
+      if (perturbationType === 0) {
+        // PLAGUE: Reduce density of a random faction by 1-2 levels
+        const targetFaction = 1 + Math.floor(Math.random() * 5);
+        for (let i = 0; i < mapW * mapH; i++) {
+          if (
+            nextCity[i] > 0 &&
+            Math.floor(nextCity[i] / 10) === targetFaction
+          ) {
+            const density = nextCity[i] % 10;
+            const reduction = Math.random() < 0.3 ? 2 : 1;
+            const newDensity = Math.max(1, density - reduction);
+            nextCity[i] = targetFaction * 10 + newDensity;
+          }
+        }
+        currentEpochEvents.push({
+          type: "PERTURBATION_PLAGUE",
+          faction: targetFaction,
+          x: mapW / 2,
+          y: mapH / 2,
+        });
+      } else if (perturbationType === 50) {
+        // CIVIL WAR: Split a faction's border tiles into a new faction identity
+        // Find which factions exist
+        const factionTiles = {};
+        for (let i = 0; i < mapW * mapH; i++) {
+          if (nextCity[i] > 0) {
+            const fId = Math.floor(nextCity[i] / 10);
+            factionTiles[fId] = (factionTiles[fId] || 0) + 1;
+          }
+        }
+        // Target the largest faction
+        let largestFaction = 0;
+        let largestCount = 0;
+        for (const [fId, count] of Object.entries(factionTiles)) {
+          if (count > largestCount) {
+            largestCount = count;
+            largestFaction = parseInt(fId);
+          }
+        }
+        if (largestFaction > 0 && largestCount > 100) {
+          // Reduce density of outer tiles (density 1-3) to weaken the faction
+          for (let i = 0; i < mapW * mapH; i++) {
+            if (
+              nextCity[i] > 0 &&
+              Math.floor(nextCity[i] / 10) === largestFaction
+            ) {
+              const density = nextCity[i] % 10;
+              if (density <= 3 && Math.random() < 0.4) {
+                nextCity[i] = 0; // Collapse outer settlements
+                nextInfra[i] = 0;
+              }
+            }
+          }
+          currentEpochEvents.push({
+            type: "PERTURBATION_CIVIL_WAR",
+            faction: largestFaction,
+            x: mapW / 2,
+            y: mapH / 2,
+          });
+        }
+      } else {
+        // NATURAL DISASTER: Random density reduction in a localized area
+        const cx = 10 + Math.floor(Math.random() * (mapW - 20));
+        const cy = 10 + Math.floor(Math.random() * (mapH - 20));
+        const radius = 8 + Math.floor(Math.random() * 12);
+        for (let y = cy - radius; y <= cy + radius; y++) {
+          for (let x = cx - radius; x <= cx + radius; x++) {
+            if (x >= 0 && x < mapW && y >= 0 && y < mapH) {
+              const dist = Math.hypot(x - cx, y - cy);
+              if (dist <= radius) {
+                const idx = y * mapW + x;
+                if (nextCity[idx] > 0) {
+                  const tId = Math.floor(nextCity[idx] / 10);
+                  const density = nextCity[idx] % 10;
+                  const reduction = dist < radius / 2 ? 3 : 1;
+                  const newDensity = density - reduction;
+                  if (newDensity <= 0) {
+                    nextCity[idx] = 0;
+                    nextInfra[idx] = 0;
+                  } else {
+                    nextCity[idx] = tId * 10 + newDensity;
+                  }
+                }
+              }
+            }
+          }
+        }
+        currentEpochEvents.push({
+          type: "PERTURBATION_DISASTER",
+          x: cx,
+          y: cy,
+        });
       }
     }
   }
@@ -508,9 +703,7 @@ export function computeOneEpoch(state, terrain, ep) {
             let cy = Math.floor(i / mapW);
             let foundNearby = false;
 
-            for (const [idParam, metadata] of Object.entries(
-              pRegistry,
-            )) {
+            for (const [idParam, metadata] of Object.entries(pRegistry)) {
               if (metadata.factionId === factionId) {
                 let px = metadata.centerTileIndex % mapW;
                 let py = Math.floor(metadata.centerTileIndex / mapW);
@@ -600,8 +793,7 @@ export function computeOneEpoch(state, terrain, ep) {
             ) {
               distMap[nIdx] = nDist;
               nextProv[nIdx] = current.pId;
-              provSizes[current.pId] =
-                (provSizes[current.pId] || 0) + 1;
+              provSizes[current.pId] = (provSizes[current.pId] || 0) + 1;
               queue.push({
                 idx: nIdx,
                 pId: current.pId,

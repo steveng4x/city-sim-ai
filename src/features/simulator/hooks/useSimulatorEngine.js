@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { generateHeightMap, computeRivers } from "../lib/terrainUtils";
 import { computeOneEpoch } from "../lib/epochSimulator";
+import { generateCityName } from "../lib/cityNames";
 import { fetchOracleLore } from "@/services/oracle";
 import {
   mapW,
@@ -29,6 +30,9 @@ export function useSimulatorEngine() {
   const [provinceSnapshots, setProvinceSnapshots] = useState([]);
   const [warEventSnapshots, setWarEventSnapshots] = useState([]);
   const [provinceRegistry, setProvinceRegistry] = useState({});
+
+  // Mega-city registry: { tileIndex: { name, factionId, x, y, bornEpoch } }
+  const [megaCityRegistry, setMegaCityRegistry] = useState({});
 
   const [lore, setLore] = useState(null);
   const [isGeneratingLore, setIsGeneratingLore] = useState(false);
@@ -235,6 +239,22 @@ export function useSimulatorEngine() {
 
         pRegistry = simState.registry;
 
+        // Build mega-city registry from events
+        const mcRegistry = {};
+        for (const epochEvents of eventSnaps) {
+          for (const evt of epochEvents) {
+            if (evt.type === "MEGACITY_BORN") {
+              mcRegistry[evt.tileIndex] = {
+                name: generateCityName(evt.tileIndex),
+                factionId: evt.factionId,
+                x: evt.x,
+                y: evt.y,
+                tileIndex: evt.tileIndex,
+              };
+            }
+          }
+        }
+
         // Store refs for infinite mode lookahead
         simStateRef.current = simState;
         terrainRef.current = terrain;
@@ -255,6 +275,7 @@ export function useSimulatorEngine() {
         setProvinceSnapshots(provSnaps);
         setWarEventSnapshots(eventSnaps);
         setProvinceRegistry(pRegistry);
+        setMegaCityRegistry(mcRegistry);
         setCurrentEpoch(0);
         setLatestComputedEpoch(maxEpochs);
         console.log("ENGINE GENERATION COMPLETE!", {
@@ -312,6 +333,27 @@ export function useSimulatorEngine() {
       simStateRef.current = state;
 
       if (!cancelRef.current) {
+        // Register any new mega-cities from computed events
+        setMegaCityRegistry((prev) => {
+          const updated = { ...prev };
+          for (let i = 0; i < count; i++) {
+            const evtIdx = snaps.events.length - count + i;
+            if (evtIdx < 0 || evtIdx >= snaps.events.length) continue;
+            for (const evt of snaps.events[evtIdx]) {
+              if (evt.type === "MEGACITY_BORN" && !updated[evt.tileIndex]) {
+                updated[evt.tileIndex] = {
+                  name: generateCityName(evt.tileIndex),
+                  factionId: evt.factionId,
+                  x: evt.x,
+                  y: evt.y,
+                  tileIndex: evt.tileIndex,
+                };
+              }
+            }
+          }
+          return updated;
+        });
+
         // Update React state with new snapshots
         setCitySnapshots([...snaps.city]);
         setInfrastructureSnapshots([...snaps.infra]);
@@ -418,6 +460,7 @@ export function useSimulatorEngine() {
     provinceSnapshots,
     warEventSnapshots,
     provinceRegistry,
+    megaCityRegistry,
     lore,
     isGeneratingLore,
     executeGeneration,

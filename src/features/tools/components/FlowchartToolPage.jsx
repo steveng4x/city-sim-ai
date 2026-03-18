@@ -5,6 +5,7 @@ import { ExplainModal } from "@/features/tools/components/ExplainModal";
 import { ReactFlowCanvas } from "@/features/tools/components/ReactFlowCanvas";
 import { GenerateModal } from "@/features/tools/components/GenerateModal";
 import { Toolbar } from "@/features/tools/components/Toolbar";
+import BorderGlow from "@/components/BorderGlow";
 import { useFlowchartAi } from "@/features/tools/hooks/useFlowchartAi";
 import { useFlowchartEditor } from "@/features/tools/hooks/useFlowchartEditor";
 import { useFlowchartFiles } from "@/features/tools/hooks/useFlowchartFiles";
@@ -271,13 +272,19 @@ export default function FlowchartToolPage() {
             className={`grid flex-1 gap-5 ${isFullscreen ? (isEditorVisible ? "min-h-0 xl:grid-cols-[minmax(380px,460px)_minmax(0,1fr)]" : "min-h-0 grid-cols-[minmax(0,1fr)]") : "xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]"}`}
           >
             {!isFullscreen || isEditorVisible ? (
-              <DataEditor
-                editorMermaid={editorMermaid}
-                errorMessage={errorMessage}
-                onChange={handleEditorChange}
-                onFormatMermaid={formatEditorMermaid}
-                isFullscreen={isFullscreen}
-              />
+              <BorderGlow
+                borderRadius={28}
+                backgroundColor="#0f172a"
+                colors={["#c084fc", "#f472b6", "#38bdf8"]}
+              >
+                <DataEditor
+                  editorMermaid={editorMermaid}
+                  errorMessage={errorMessage}
+                  onChange={handleEditorChange}
+                  onFormatMermaid={formatEditorMermaid}
+                  isFullscreen={isFullscreen}
+                />
+              </BorderGlow>
             ) : null}
             <ReactFlowCanvas
               ref={canvasRef}
