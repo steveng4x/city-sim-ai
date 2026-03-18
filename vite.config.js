@@ -4,24 +4,131 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { promises as fs } from "fs";
 import { fileURLToPath } from "url";
+import {
+  parseFlowchartJson,
+  parseFlowchartSource,
+  parseMermaidToFlowchartData,
+} from "./src/features/tools/utils/flowchart.js";
 
 const workspaceRoot = fileURLToPath(new URL(".", import.meta.url));
 
-const flowchartDirectory = path.resolve(
+const flowchartRootDirectory = path.resolve(
   workspaceRoot,
-  "src/features/tools/JSON Flowchart Visualizer/json",
+  "src/features/tools",
 );
 
-function normalizeJsonFileName(fileName = "") {
+const defaultFlowchartFolder = "json";
+
+function isPathInsideDirectory(targetPath, rootPath) {
+  const relativePath = path.relative(rootPath, targetPath);
+
+  return (
+    relativePath === "" ||
+    (!relativePath.startsWith("..") && !path.isAbsolute(relativePath))
+  );
+}
+
+function normalizeFlowchartFolder(folderName = defaultFlowchartFolder) {
+  const trimmedFolder = String(folderName || defaultFlowchartFolder)
+    .trim()
+    .replace(/\\+/g, "/")
+    .replace(/^\/+|\/+$/g, "");
+
+  if (!trimmedFolder) {
+    return defaultFlowchartFolder;
+  }
+
+  const segments = trimmedFolder.split("/");
+
+  if (!segments.every((segment) => /^[A-Za-z0-9._-]+$/.test(segment))) {
+    return null;
+  }
+
+  return segments.join("/");
+}
+
+function resolveFlowchartDirectory(folderName = defaultFlowchartFolder) {
+  const normalizedFolder = normalizeFlowchartFolder(folderName);
+
+  if (!normalizedFolder) {
+    return null;
+  }
+
+  const resolvedDirectory = path.resolve(
+    flowchartRootDirectory,
+    normalizedFolder,
+  );
+
+  if (!isPathInsideDirectory(resolvedDirectory, flowchartRootDirectory)) {
+    return null;
+  }
+
+  return {
+    folder: normalizedFolder,
+    directory: resolvedDirectory,
+  };
+}
+
+async function collectFlowchartFolders(
+  currentDirectory,
+  currentRelativePath = "",
+  folders = new Set(),
+) {
+  const entries = await fs.readdir(currentDirectory, { withFileTypes: true });
+  let hasFlowchartFiles = false;
+
+  for (const entry of entries) {
+    if (
+      entry.isFile() &&
+      (entry.name.endsWith(".json") || entry.name.endsWith(".mmd"))
+    ) {
+      hasFlowchartFiles = true;
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      const nextRelativePath = currentRelativePath
+        ? `${currentRelativePath}/${entry.name}`
+        : entry.name;
+
+      await collectFlowchartFolders(
+        path.join(currentDirectory, entry.name),
+        nextRelativePath,
+        folders,
+      );
+    }
+  }
+
+  if (hasFlowchartFiles && currentRelativePath) {
+    folders.add(currentRelativePath);
+  }
+
+  return folders;
+}
+
+async function listAvailableFlowchartFolders() {
+  await fs.mkdir(flowchartRootDirectory, { recursive: true });
+
+  const folders = await collectFlowchartFolders(flowchartRootDirectory);
+
+  folders.add(defaultFlowchartFolder);
+
+  return Array.from(folders).sort((left, right) => left.localeCompare(right));
+}
+
+function normalizeFlowchartFileName(fileName = "") {
   const trimmed = String(fileName).trim();
 
   if (!trimmed) {
     return null;
   }
 
-  const normalized = trimmed.endsWith(".json") ? trimmed : `${trimmed}.json`;
+  const normalized =
+    trimmed.endsWith(".json") || trimmed.endsWith(".mmd")
+      ? trimmed
+      : `${trimmed}.mmd`;
 
-  if (!/^[A-Za-z0-9._-]+\.json$/.test(normalized)) {
+  if (!/^[A-Za-z0-9._-]+\.(json|mmd)$/.test(normalized)) {
     return null;
   }
 
@@ -60,6 +167,29 @@ function getGeminiResponseText(result) {
     .trim();
 }
 
+function normalizeFlowchartSource(sourceText = "", format = "mermaid") {
+  const nextFormat = String(format || "mermaid")
+    .trim()
+    .toLowerCase();
+
+  if (nextFormat === "json") {
+    const parsedData = parseFlowchartJson(sourceText);
+    return {
+      format: "json",
+      sourceText: `${JSON.stringify(parsedData, null, 2)}\n`,
+      data: parsedData,
+    };
+  }
+
+  const parsedMermaid = parseMermaidToFlowchartData(sourceText);
+  return {
+    format: "mermaid",
+    sourceText: `${String(sourceText || "").trim()}\n`,
+    direction: parsedMermaid.direction,
+    data: parsedMermaid.data,
+  };
+}
+
 async function callGeminiApi({ apiKey, model, body }) {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -81,6 +211,10 @@ async function callGeminiApi({ apiKey, model, body }) {
 function flowchartFileApiPlugin({ geminiApiKey, geminiModel }) {
   const handleRequest = async (request, response) => {
     const url = new URL(request.url || "/", "http://localhost");
+    const requestedFolder =
+      url.searchParams.get("folder") || defaultFlowchartFolder;
+    const resolvedFlowchartDirectory =
+      resolveFlowchartDirectory(requestedFolder);
 
     if (
       !url.pathname.startsWith("/api/flowcharts") &&
@@ -90,6 +224,17 @@ function flowchartFileApiPlugin({ geminiApiKey, geminiModel }) {
     }
 
     try {
+      if (
+        url.pathname.startsWith("/api/flowcharts") &&
+        !resolvedFlowchartDirectory
+      ) {
+        createJsonResponse(response, 400, {
+          error:
+            "Invalid source folder. Use a relative folder inside src/features/tools.",
+        });
+        return true;
+      }
+
       if (
         [
           "/api/flowcharts/generate",
@@ -126,51 +271,21 @@ function flowchartFileApiPlugin({ geminiApiKey, geminiModel }) {
             systemInstruction: {
               parts: [
                 {
-                  text: "You are an expert flowchart architect. Based on the user's description, generate a valid JSON flowchart. The JSON must exactly contain two arrays: 'nodes' and 'links'. Nodes must have: 'id' (string), 'label' (short string), and 'type' (must be 'terminator', 'process', or 'decision'). Links must have: 'source' (node id), 'target' (node id), and optionally 'label' (string). Ensure the flow is logical and connections use valid IDs. Return ONLY the JSON object.",
+                  text: "You are an expert flowchart architect. Based on the user's description, generate a valid Mermaid flowchart using this exact subset: begin with 'flowchart LR'; use node ids that start with a letter and contain only letters, numbers, underscores, or dashes; use '([label])' for terminator nodes, '[label]' for process nodes, '{label}' for decision nodes, '[[label]]' for subflow nodes, '((label))' for group nodes, and '[/label/]' for note nodes. Use '-->' for links and '-->|label|' for labeled links. Keep labels short. Return ONLY Mermaid text.",
                 },
               ],
-            },
-            generationConfig: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: "OBJECT",
-                properties: {
-                  nodes: {
-                    type: "ARRAY",
-                    items: {
-                      type: "OBJECT",
-                      properties: {
-                        id: { type: "STRING" },
-                        label: { type: "STRING" },
-                        type: {
-                          type: "STRING",
-                          enum: ["terminator", "process", "decision"],
-                        },
-                      },
-                      required: ["id", "label", "type"],
-                    },
-                  },
-                  links: {
-                    type: "ARRAY",
-                    items: {
-                      type: "OBJECT",
-                      properties: {
-                        source: { type: "STRING" },
-                        target: { type: "STRING" },
-                        label: { type: "STRING" },
-                      },
-                      required: ["source", "target"],
-                    },
-                  },
-                },
-                required: ["nodes", "links"],
-              },
             },
           },
         });
 
+        const sourceText = getGeminiResponseText(result);
+        const parsedMermaid = parseMermaidToFlowchartData(sourceText);
+
         createJsonResponse(response, 200, {
-          data: JSON.parse(getGeminiResponseText(result)),
+          data: parsedMermaid.data,
+          direction: parsedMermaid.direction,
+          sourceText,
+          format: "mermaid",
         });
         return true;
       }
@@ -180,14 +295,16 @@ function flowchartFileApiPlugin({ geminiApiKey, geminiModel }) {
         request.method === "POST"
       ) {
         const requestBody = await readRequestBody(request);
-        const { flowchartJson } = JSON.parse(requestBody || "{}");
+        const { flowchartMermaid } = JSON.parse(requestBody || "{}");
 
-        if (!String(flowchartJson || "").trim()) {
+        if (!String(flowchartMermaid || "").trim()) {
           createJsonResponse(response, 400, {
-            error: "Flowchart JSON is required for explanation.",
+            error: "Flowchart Mermaid is required for explanation.",
           });
           return true;
         }
+
+        const parsedFlowchart = parseMermaidToFlowchartData(flowchartMermaid);
 
         const result = await callGeminiApi({
           apiKey: geminiApiKey,
@@ -197,7 +314,7 @@ function flowchartFileApiPlugin({ geminiApiKey, geminiModel }) {
               {
                 parts: [
                   {
-                    text: `Explain this flowchart process clearly and step-by-step:\n\n${flowchartJson}`,
+                    text: `Explain this Mermaid flowchart clearly and step-by-step. Use the normalized structure below when reasoning about the process:\n\n${JSON.stringify(parsedFlowchart.data, null, 2)}\n\nOriginal Mermaid:\n${flowchartMermaid}`,
                   },
                 ],
               },
@@ -205,7 +322,7 @@ function flowchartFileApiPlugin({ geminiApiKey, geminiModel }) {
             systemInstruction: {
               parts: [
                 {
-                  text: "You are a helpful process analyst. Given a JSON representation of a flowchart (nodes and links), write a clear, concise, and easy-to-read step-by-step explanation of the process. Highlight the start, major decisions, paths taken, and the endpoints. Keep formatting clean with bullet points.",
+                  text: "You are a helpful process analyst. Given a Mermaid flowchart and its normalized node/link structure, write a clear, concise, and easy-to-read step-by-step explanation of the process. Highlight the start, major decisions, paths taken, and the endpoints. Keep formatting clean with bullet points.",
                 },
               ],
             },
@@ -239,23 +356,37 @@ Respond strictly in JSON: { "name": "string", "foundingMyth": "string", "culture
         return true;
       }
 
+      const { folder: activeFolder, directory: flowchartDirectory } =
+        resolvedFlowchartDirectory;
+      const availableFolders = await listAvailableFlowchartFolders();
+
       await fs.mkdir(flowchartDirectory, { recursive: true });
 
       if (url.pathname === "/api/flowcharts" && request.method === "GET") {
         const files = await fs.readdir(flowchartDirectory, {
           withFileTypes: true,
         });
-        const jsonFiles = files
-          .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
+        const flowchartFiles = files
+          .filter(
+            (entry) =>
+              entry.isFile() &&
+              (entry.name.endsWith(".json") || entry.name.endsWith(".mmd")),
+          )
           .map((entry) => entry.name)
           .sort((left, right) => left.localeCompare(right));
 
-        createJsonResponse(response, 200, { files: jsonFiles });
+        createJsonResponse(response, 200, {
+          folder: activeFolder,
+          folders: Array.from(
+            new Set([...availableFolders, activeFolder]),
+          ).sort((left, right) => left.localeCompare(right)),
+          files: flowchartFiles,
+        });
         return true;
       }
 
       const encodedFileName = url.pathname.replace("/api/flowcharts/", "");
-      const fileName = normalizeJsonFileName(
+      const fileName = normalizeFlowchartFileName(
         decodeURIComponent(encodedFileName),
       );
 
@@ -271,24 +402,31 @@ Respond strictly in JSON: { "name": "string", "foundingMyth": "string", "culture
 
       if (request.method === "GET") {
         const fileContents = await fs.readFile(filePath, "utf8");
+        const parsedSource = parseFlowchartSource(fileContents);
+
         createJsonResponse(response, 200, {
           fileName,
-          data: JSON.parse(fileContents),
+          data: parsedSource.data,
+          ...(parsedSource.direction
+            ? { direction: parsedSource.direction }
+            : {}),
+          format: parsedSource.format,
+          sourceText: fileContents,
         });
         return true;
       }
 
       if (request.method === "PUT") {
         const requestBody = await readRequestBody(request);
+        const { sourceText, format } = JSON.parse(requestBody || "{}");
+        const normalizedSource = normalizeFlowchartSource(sourceText, format);
 
-        const parsedBody = JSON.parse(requestBody || "{}");
-        const formattedJson = `${JSON.stringify(parsedBody, null, 2)}\n`;
-
-        await fs.writeFile(filePath, formattedJson, "utf8");
+        await fs.writeFile(filePath, normalizedSource.sourceText, "utf8");
 
         createJsonResponse(response, 200, {
           message: `Saved ${fileName}`,
           fileName,
+          format: normalizedSource.format,
         });
         return true;
       }
