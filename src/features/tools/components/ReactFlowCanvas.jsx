@@ -24,6 +24,7 @@ import "@xyflow/react/dist/style.css";
 import { BackEdge } from "@/features/tools/components/reactflow/FlowchartReactEdge";
 import { FLOWCHART_NODE_DIMENSIONS } from "@/features/tools/utils/flowchart";
 import { toReactFlowElements } from "@/features/tools/utils/reactFlowAdapter";
+import FloatingEdge from "./FloatingEdge";
 
 const DECISION_NODE_DIMENSIONS = FLOWCHART_NODE_DIMENSIONS.decision;
 const TERMINATOR_NODE_DIMENSIONS = FLOWCHART_NODE_DIMENSIONS.terminator;
@@ -85,13 +86,13 @@ const DecisionNode = React.memo(function DecisionNode({ data }) {
       </span>
       <Handle
         type="target"
-        position={handles.target}
-        className="!bg-yellow-500 !border-yellow-600 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
       <Handle
         type="source"
-        position={handles.source}
-        className="!bg-yellow-500 !border-yellow-600 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
     </div>
   );
@@ -114,13 +115,13 @@ const TerminatorNode = React.memo(function TerminatorNode({ data }) {
       </span>
       <Handle
         type="target"
-        position={handles.target}
-        className="!bg-purple-500 !border-purple-600 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
       <Handle
         type="source"
-        position={handles.source}
-        className="!bg-purple-500 !border-purple-600 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
     </div>
   );
@@ -143,13 +144,13 @@ const ProcessNode = React.memo(function ProcessNode({ data }) {
       </span>
       <Handle
         type="target"
-        position={handles.target}
-        className="!bg-sky-400 !border-sky-500 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
       <Handle
         type="source"
-        position={handles.source}
-        className="!bg-sky-400 !border-sky-500 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
     </div>
   );
@@ -195,13 +196,13 @@ const SubflowNode = React.memo(function SubflowNode({ data }) {
       </div>
       <Handle
         type="target"
-        position={handles.target}
-        className="!bg-indigo-400 !border-indigo-500 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
       <Handle
         type="source"
-        position={handles.source}
-        className="!bg-indigo-400 !border-indigo-500 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
     </div>
   );
@@ -229,13 +230,13 @@ const GroupNode = React.memo(function GroupNode({ data }) {
       </div>
       <Handle
         type="target"
-        position={handles.target}
-        className="!bg-slate-400 !border-slate-500 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
       <Handle
         type="source"
-        position={handles.source}
-        className="!bg-slate-400 !border-slate-500 !w-2 !h-2"
+        position={Position.Center}
+        className="opacity-0 w-0 h-0 border-0 m-0"
       />
     </div>
   );
@@ -252,6 +253,7 @@ const nodeTypes = {
 
 const edgeTypes = {
   backEdge: BackEdge,
+  floating: FloatingEdge,
 };
 
 const FORCE_LINK_DISTANCE = 185;
@@ -642,9 +644,9 @@ function ReactFlowContent(
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
-          fitViewOptions={{ padding: 0.15 }}
+          fitViewOptions={{ padding: 0.2 }}
           minZoom={0.1}
-          maxZoom={4}
+          maxZoom={2}
           proOptions={{ hideAttribution: true }}
           defaultEdgeOptions={{
             style: { stroke: "#cbd5e1", strokeWidth: 2 },

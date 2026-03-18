@@ -149,7 +149,7 @@ export function toReactFlowElements(data, options = {}) {
         source: sourceId,
         target: targetId,
         label: link.label || "",
-        type: isBackEdge ? "backEdge" : "smoothstep",
+        type: isBackEdge ? "backEdge" : "floating",
         pathOptions: { borderRadius: 0 },
         animated: isBackEdge,
         style: edgePresentation.style,
