@@ -32,7 +32,9 @@ export function SimulatorApp() {
     playing: engine.playing,
     setPlaying: engine.setPlaying,
     maxEpochs,
-    finishGeneration: engine.finishGeneration, // Added finishGeneration here
+    latestComputedEpoch: engine.latestComputedEpoch,
+    infiniteMode: engine.infiniteMode,
+    finishGeneration: engine.finishGeneration,
   });
 
   return (
@@ -107,6 +109,10 @@ export function SimulatorApp() {
             setPlaying={engine.setPlaying}
             currentEpoch={engine.currentEpoch}
             maxEpochs={maxEpochs}
+            latestComputedEpoch={engine.latestComputedEpoch}
+            infiniteMode={engine.infiniteMode}
+            isComputingAhead={engine.isComputingAhead}
+            continueSimulation={engine.continueSimulation}
             startTransition={startTransition}
           />
         </div>

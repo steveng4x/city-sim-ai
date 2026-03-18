@@ -13,6 +13,8 @@ export function useSimulatorAnimation({
   playing,
   setPlaying,
   maxEpochs,
+  latestComputedEpoch,
+  infiniteMode,
 }) {
   const startTransition = useCallback(
     (fromEpoch, toEpoch, duration = 700) => {
@@ -100,7 +102,8 @@ export function useSimulatorAnimation({
 
   useEffect(() => {
     if (!playing) return;
-    if (currentEpoch >= maxEpochs) {
+    const stopEpoch = infiniteMode ? latestComputedEpoch : maxEpochs;
+    if (currentEpoch >= stopEpoch) {
       setPlaying(false);
       return;
     }
@@ -108,7 +111,15 @@ export function useSimulatorAnimation({
       startTransition(currentEpoch, currentEpoch + 1, 700);
     }, 700);
     return () => clearTimeout(timer);
-  }, [playing, currentEpoch, startTransition, maxEpochs, setPlaying]);
+  }, [
+    playing,
+    currentEpoch,
+    startTransition,
+    maxEpochs,
+    latestComputedEpoch,
+    infiniteMode,
+    setPlaying,
+  ]);
 
   return { startTransition };
 }

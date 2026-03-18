@@ -2,6 +2,12 @@ export const mapW = 160;
 export const mapH = 100;
 export const tileSize = 6;
 export const maxEpochs = 80;
+
+// Infinite mode constants
+export const BUFFER_THRESHOLD = 5;
+export const LOOKAHEAD_SIZE = 20;
+export const MAX_STORED_EPOCHS = 2000;
+
 export const factionColors = [
   "#ef4444",
   "#3b82f6",
