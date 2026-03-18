@@ -34,6 +34,15 @@ The engine automatically structures empires into provinces and distinct regions 
 
 Integrated with the Google Gemini API, the simulator can **"dream."** Instead of random generation, the AI acts as a fantasy historian to invent a unique world name, founding myth, and culture. It then directly controls the procedural engine's geographical parameters (roughness, sea level, rivers) to physically build the world it just wrote a history for.
 
+### 🧭 Mermaid Flowchart Tool
+
+The workspace also includes a Mermaid-powered flowchart tool for authoring and visualizing process diagrams.
+
+- **Mermaid-first editing:** The flowchart editor now uses Mermaid as its source format.
+- **Legacy compatibility:** Existing `.json` flowchart files can still be loaded and converted into Mermaid in the editor.
+- **Native examples:** Starter flowcharts live under `src/features/tools/json/`, including a native `.mmd` sample for the current workflow.
+- **AI assistance:** Gemini can generate Mermaid flowcharts and explain them from the same tool surface.
+
 ---
 
 ## 🛠️ Tech Stack
@@ -89,3 +98,10 @@ Make sure you have Node.js and npm installed.
 - **Dream with AI:** Click the "Dream World" button to let the Gemini LLM invent a story and build a matching world.
 - **View Modes:** Use the top-right toggle to switch between viewing the raw **Terrain**, the **Heatmap** logic, or the cinematic **City View**.
 - **Time Travel:** Press the Play button at the bottom, or drag the timeline slider to scrub through history!
+
+## 🗂️ Flowchart Tool Notes
+
+- Open the flowchart tool from `/tools/flowchart` in the app.
+- Save new diagrams as `.mmd` Mermaid files.
+- Use `src/features/tools/json/1.mmd` as the native starter example.
+- Keep `src/features/tools/json/1.json` only as a legacy compatibility sample.

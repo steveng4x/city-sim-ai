@@ -40,7 +40,7 @@ export function GenerateModal({
       <div className="space-y-4">
         <p className="text-sm text-slate-600">
           Describe a process and the AI will generate the corresponding
-          flowchart JSON.
+          flowchart Mermaid.
         </p>
         <textarea
           rows={4}
