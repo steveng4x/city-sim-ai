@@ -5,7 +5,7 @@ test.describe("Flowchart Visual Fidelity", () => {
     page,
   }) => {
     await page.goto("/#/tools/flowchart");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
     const toolbarToggle = page.locator(
       "button[aria-label='Show toolbar'], button[title='Show toolbar'], button:has-text('Show Controls')",
@@ -17,6 +17,8 @@ test.describe("Flowchart Visual Fidelity", () => {
 
     const fileSelect = page.locator("[data-testid='flowchart-file-select']:visible");
     await expect(fileSelect).toBeVisible({ timeout: 15_000 });
+    // Ensure the option is actually in the DOM before selecting it
+    await expect(fileSelect.locator("option[value='3.mmd']")).toBeAttached({ timeout: 15_000 });
     await fileSelect.selectOption("3.mmd");
 
     const applyFileButton = page.locator("[data-testid='flowchart-apply-file']:visible");

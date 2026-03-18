@@ -1,0 +1,66 @@
+flowchart LR
+    A([Open Dev Mode])
+    PRE{Prerequisites met?}
+    FAIL[/Missing: Org plan, published library, or AI IDE/]
+    B[Inspect Design]
+    AUDIT[Audit component inventory]
+    GAP{Any code components missing?}
+    CREATE[Create missing components]
+    C[[Init Code Connect]]
+    GH[Connect GitHub]
+    D{Select mapping method}
+    NOTE_D[/UI and CLI cannot coexist on same component/]
+    E((UI Mapping))
+    F((CLI Mapping))
+    NOTE_F[/CLI mappings are strings, not executed code/]
+    SB{Storybook available?}
+    SB_V[Source from story variants]
+    PROPS[Validate props and variants]
+    I[Map component]
+    J{Preview accurate?}
+    MORE{More components?}
+    K[[Publish batch to MCP]]
+    M[Prompt Copilot]
+    N[AI scaffolds layout]
+    SPEC{Scaffold matches spec?}
+    NOTE_SPEC[/Treat Figma as spec, not final code generator/]
+    P((Refine by section))
+    QA{Passes QA?}
+    PR[PR and team review]
+    Q([Finalize implementation])
+
+    A --> PRE
+    PRE -->|No| FAIL
+    PRE -->|Yes| B
+    B --> AUDIT
+    AUDIT --> GAP
+    GAP -->|Yes| CREATE
+    CREATE --> C
+    GAP -->|No| C
+    C --> GH
+    GH --> D
+    D -->|note| NOTE_D
+    D -->|UI| E
+    D -->|CLI| F
+    F -->|note| NOTE_F
+    F --> SB
+    SB -->|Yes| SB_V
+    SB_V --> PROPS
+    SB -->|No| PROPS
+    E --> PROPS
+    PROPS --> I
+    I --> J
+    J -->|Adjust| I
+    J -->|Accurate| MORE
+    MORE -->|Yes| D
+    MORE -->|No| K
+    K --> M
+    M --> N
+    N --> SPEC
+    SPEC -->|note| NOTE_SPEC
+    SPEC -->|No| M
+    SPEC -->|Yes| P
+    P --> QA
+    QA -->|No| P
+    QA -->|Yes| PR
+    PR --> Q
