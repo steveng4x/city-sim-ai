@@ -186,12 +186,15 @@ export function SimulatorControls({
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold">
+          <span id="rivers-label" className="text-xs text-text-secondary uppercase tracking-widest font-bold">
             Rivers
           </span>
           <button
+            role="switch"
+            aria-checked={showRivers}
+            aria-labelledby="rivers-label"
             onClick={() => setShowRivers(!showRivers)}
-            className={`w-8 h-4 rounded-full transition-colors relative ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
+            className={`w-8 h-4 rounded-full transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
               className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showRivers ? "translate-x-4" : "translate-x-1"}`}
@@ -200,12 +203,15 @@ export function SimulatorControls({
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold">
+          <span id="resources-label" className="text-xs text-text-secondary uppercase tracking-widest font-bold">
             Resources
           </span>
           <button
+            role="switch"
+            aria-checked={showResources}
+            aria-labelledby="resources-label"
             onClick={() => setShowResources(!showResources)}
-            className={`w-8 h-4 rounded-full transition-colors relative ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
+            className={`w-8 h-4 rounded-full transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
               className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showResources ? "translate-x-4" : "translate-x-1"}`}
