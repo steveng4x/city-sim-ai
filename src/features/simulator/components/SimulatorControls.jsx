@@ -186,12 +186,15 @@ export function SimulatorControls({
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold">
+          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold" aria-hidden="true">
             Rivers
           </span>
           <button
+            role="switch"
+            aria-checked={showRivers}
+            aria-label="Rivers"
             onClick={() => setShowRivers(!showRivers)}
-            className={`w-8 h-4 rounded-full transition-colors relative ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
+            className={`w-8 h-4 rounded-full transition-colors relative focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-bg1 focus-visible:outline-none ${showRivers ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
               className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showRivers ? "translate-x-4" : "translate-x-1"}`}
@@ -200,12 +203,15 @@ export function SimulatorControls({
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold">
+          <span className="text-xs text-text-secondary uppercase tracking-widest font-bold" aria-hidden="true">
             Resources
           </span>
           <button
+            role="switch"
+            aria-checked={showResources}
+            aria-label="Resources"
             onClick={() => setShowResources(!showResources)}
-            className={`w-8 h-4 rounded-full transition-colors relative ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
+            className={`w-8 h-4 rounded-full transition-colors relative focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-bg1 focus-visible:outline-none ${showResources ? "bg-brand" : "bg-neutral-bg4"}`}
           >
             <div
               className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${showResources ? "translate-x-4" : "translate-x-1"}`}
